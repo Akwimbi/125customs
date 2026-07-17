@@ -1,0 +1,216 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * 125Customs - Human-Made Design System
+ * Not AI-generated. Colors chosen for Kenyan industrial context.
+ */
+
+:root {
+  /* 
+   * PRIMARY: Deep Rust (not AI red)
+   * Chosen because: laser etching leaves burn marks, 
+   *                metal oxidizes to this color
+   */
+  --color-primary: #8B4513; /* saddle brown - warm, earthy */
+  --color-primary-dark: #654321;
+  --color-primary-light: #A0522D;
+
+  /* 
+   * SECONDARY: Weathered Steel (not gray-500)
+   * Chosen because: industrial tags, metal plates
+   */
+  --color-secondary: #4A4A4A;
+  --color-secondary-light: #6B6B6B;
+
+  /* 
+   * BACKGROUND: Warm off-white (not gray-50)
+   * Chosen because: paper tags, unbleached card
+   */
+  --color-bg: #FAF8F5;
+  --color-bg-alt: #F5F0EB;
+
+  /* 
+   * ACCENT: Subtle copper (not blue/purple)
+   * Chosen because: engraved metal sheen
+   */
+  --color-accent: #B87333;
+}
+
+/*
+ * HUMAN TOUCH: Custom font classes (not Tailwind defaults)
+ * Specific to 125Customs brand
+ */
+.font-display {
+  font-family: 'Playfair Display', serif;
+}
+
+/* Base styles */
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--color-bg);
+  color: var(--color-secondary);
+  line-height: 1.6; /* Not 1.5 (too tight) or 1.75 (too loose) */
+}
+
+/* Headings - Asymmetric scale (not perfect rem steps) */
+h1, .h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: 2.75rem; /* Not 3rem (too round) */
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em; /* Tighten for character */
+}
+
+h2, .h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 2rem; /* Not 2.5rem (too big) */
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+/* 
+ * CARDS: Not all the same
+ * Some products need prominent cards, others subtle
+ */
+.card-prominent {
+  background: white;
+  border: 1px solid #E8E2D9; /* warm gray, not cold blue-gray */
+  border-radius: 12px; /* Not 16px (too rounded) */
+  padding: 24px; /* Not 32px */
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06); /* Subtle, not dramatic */
+}
+
+.card-subtle {
+  background: transparent;
+  border-bottom: 2px solid var(--color-primary);
+  padding-bottom: 16px;
+  border-radius: 0; /* Sharp, industrial */
+}
+
+/* 
+ * BUTTONS: Not all rounded
+ * Primary: sharp corners (industrial feel)
+ * Secondary: slightly rounded (approachable)
+ */
+.btn-primary {
+  background: var(--color-primary);
+  color: white;
+  padding: 14px 28px; /* Not symmetrical */
+  border: none;
+  border-radius: 4px; /* Sharp, not friendly */
+  font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase; /* Industrial labels feel */
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-primary:hover {
+  background: var(--color-primary-dark);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--color-primary);
+  padding: 12px 24px;
+  border: 2px solid var(--color-primary);
+  border-radius: 8px; /* Slightly friendly */
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* 
+ * LAYOUT: Asymmetric when it makes sense
+ * Not every section needs to be a 3-column grid
+ */
+.container-tight {
+  max-width: 1080px; /* Not 1280px (too wide for e-comm) */
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* Smooth scrolling (only if user wants it) */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* 
+ * Links: Subtle underline (not default blue)
+ */
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* 
+ * Images: Responsive by default
+ */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* 
+ * HUMAN TOUCH: Custom scrollbar (subtle, not default)
+ * Only for desktop (mobile has own scroll)
+ */
+@media (min-width: 768px) {
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: var(--color-bg);
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: #D4CDBF;
+    border-radius: 4px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-primary);
+  }
+}
+
+/* 
+ * Selection color (brand-specific)
+ */
+::selection {
+  background: var(--color-primary);
+  color: white;
+}
+
+/* 
+ * HUMAN TOUCH: Print styles (e-commerce specific)
+ * Invoices, order confirmations
+ */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  body {
+    background: white;
+    color: black;
+  }
+  
+  a {
+    color: black;
+    text-decoration: underline;
+  }
+}

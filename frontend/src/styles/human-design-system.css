@@ -1,0 +1,289 @@
+/* 125Customs - Human-Made Design System */
+/* Not AI-generated. Colors chosen for Kenyan industrial context. */
+
+:root {
+  /* 
+   * PRIMARY: Deep Rust (not AI red)
+   * Chosen because: laser etching leaves burn marks, 
+   *                metal oxidizes to this color
+   */
+  --color-primary: #8B4513; /* saddle brown - warm, earthy */
+  --color-primary-dark: #654321;
+  --color-primary-light: #A0522D;
+
+  /* 
+   * SECONDARY: Weathered Steel (not gray-500)
+   * Chosen because: industrial tags, metal plates
+   */
+  --color-secondary: #4A4A4A;
+  --color-secondary-light: #6B6B6B;
+
+  /* 
+   * BACKGROUND: Warm off-white (not gray-50)
+   * Chosen because: paper tags, unbleached card
+   */
+  --color-bg: #FAF8F5;
+  --color-bg-alt: #F5F0EB;
+
+  /* 
+   * ACCENT: Subtle copper (not blue/purple)
+   * Chosen because: engraved metal sheen
+   */
+  --color-accent: #B87333;
+
+  /* Typography - Human Choice */
+  /* 
+   * HEADING: Playfair Display (serif with character)
+   * BODY: Inter (clean, but not default - chosen deliberately)
+   */
+  
+  /* Spacing - Intentional, not mathematical */
+  /*
+   * Not 4px grid. Real designers use:
+   * - 8px base for small gaps
+   * - 24px for section gaps (not 32px which is too perfect)
+   * - 40px for major breaks
+   */
+}
+
+/* Base styles */
+body {
+  background-color: var(--color-bg);
+  color: var(--color-secondary);
+  font-family: 'Inter', -apple-system, sans-serif;
+  line-height: 1.6; /* Not 1.5 (too tight) or 1.75 (too loose) */
+}
+
+/* Headings - Asymmetric scale (not perfect rem steps) */
+h1, .h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: 2.75rem; /* Not 3rem (too round) */
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em; /* Tighten for character */
+}
+
+h2, .h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 2rem; /* Not 2.5rem (too big) */
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+/* 
+ * CARDS: Not all the same
+ * Some products need prominent cards, others subtle
+ */
+.card-prominent {
+  background: white;
+  border: 1px solid #E8E2D9; /* warm gray, not cold blue-gray */
+  border-radius: 12px; /* Not 16px (too rounded) */
+  padding: 24px; /* Not 32px */
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06); /* Subtle, not dramatic */
+}
+
+.card-subtle {
+  background: transparent;
+  border-bottom: 2px solid var(--color-primary);
+  padding-bottom: 16px;
+  border-radius: 0; /* Sharp, industrial */
+}
+
+/* 
+ * BUTTONS: Not all rounded
+ * Primary: sharp corners (industrial feel)
+ * Secondary: slightly rounded (approachable)
+ */
+.btn-primary {
+  background: var(--color-primary);
+  color: white;
+  padding: 14px 28px; /* Not symmetrical */
+  border: none;
+  border-radius: 4px; /* Sharp, not friendly */
+  font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase; /* Industrial labels feel */
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-primary:hover {
+  background: var(--color-primary-dark);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--color-primary);
+  padding: 12px 24px;
+  border: 2px solid var(--color-primary);
+  border-radius: 8px; /* Slightly friendly */
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* 
+ * LAYOUT: Asymmetric when it makes sense
+ * Not every section needs to be a 3-column grid
+ */
+.container-tight {
+  max-width: 1080px; /* Not 1280px (too wide for e-comm) */
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* 
+ * PRODUCT GRID: Mix of sizes (not uniform)
+ * Some products get bigger cards (featured)
+ */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px; /* Not 32px */
+}
+
+.product-grid-featured {
+  display: grid;
+  grid-template-columns: 1.8fr 1fr; /* Asymmetric */
+  gap: 24px;
+}
+
+/* 
+ * WHATSAPP BUTTON: Fixed position, but SUBTLE
+ * Not bouncing, not glowing
+ */
+.whatsapp-float {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: #25D366;
+  color: white;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  cursor: pointer;
+  transition: transform 0.2s;
+  z-index: 50;
+}
+
+.whatsapp-float:hover {
+  transform: scale(1.05); /* Not 1.1 (too bouncy) */
+}
+
+/* 
+ * ANIMATIONS: None by default
+ * If needed: single property, short duration
+ */
+@media (prefers-reduced-motion: no-preference) {
+  .fade-in {
+    animation: fadeIn 0.3s ease-out; /* Not 0.5s (too slow) */
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* 
+ * FORMS: Clear, not decorated
+ * No glowing borders, no fancy labels
+ */
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+textarea,
+select {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid #D4CDBF;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-family: inherit;
+  background: white;
+  transition: border-color 0.2s;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  /* No glow, no box-shadow - clean */
+}
+
+/* 
+ * M-PESA BUTTON: Distinct, not generic
+ * Green, but specific to M-Pesa brand
+ */
+.btn-mpesa {
+  background: #25D366;
+  color: white;
+  border: none;
+  padding: 16px 24px;
+  border-radius: 6px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  cursor: pointer;
+  width: 100%;
+}
+
+/* 
+ * PRICING: Clear, KES format
+ * Not "$99/mo" SaaS style
+ */
+.price-display {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.price-display .currency {
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--color-secondary-light);
+}
+
+/* 
+ * MOBILE: Optimized, not just responsive
+ * Real e-comm: thumb-friendly, not pixel-perfect
+ */
+@media (max-width: 768px) {
+  h1, .h1 {
+    font-size: 2rem;
+  }
+  
+  .product-grid {
+    grid-template-columns: repeat(2, 1fr); /* 2 col, not 1 */
+    gap: 16px;
+  }
+  
+  .btn-primary,
+  .btn-secondary {
+    padding: 16px 20px; /* Bigger tap target */
+    width: 100%; /* Full width on mobile */
+  }
+}
+
+/* 
+ * PRINT: Invoice-friendly
+ * Because this is an e-comm site with invoicing
+ */
+@media print {
+  .no-print {
+    display: none;
+  }
+  
+  body {
+    background: white;
+    color: black;
+  }
+}
