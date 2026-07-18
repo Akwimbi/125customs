@@ -95,7 +95,7 @@ async function verifyPayment(reference) {
 function handleWebhook(event, signature) {
   const crypto = require('crypto');
   const hash = crypto.createHmac('sha512', PAYSTACK_WEBHOOK_SECRET)
-    .update(JSON.stringify(event))
+    .update(event)
     .digest('hex');
 
   if (hash !== signature) {
@@ -115,5 +115,30 @@ function handleWebhook(event, signature) {
 module.exports = {
   initializePayment,
   verifyPayment,
-  handleWebhook
+  handleWebhook,
+  createTransactionIfNotExists
 };
+
+// Create Paystack transaction record if it does not exist
+async function createTransactionIfNotExists(transactionData) {
+  const { orderId, reference, amount, channel, status } = transactionData;
+  // Try to find existing transaction by reference
+  let transaction = await prisma.paystackTransaction.findUnique({
+    where: { reference }
+  });
+  if (!transaction) {
+    transaction = await prisma.paystackTransaction.create({
+      data: {
+        orderId,
+        reference,
+        amount: Math.round(amount * 100), // amount in kobo
+        channel,
+        status
+      }
+    });
+  }
+  return transaction;
+}
+  initializePayment,
+  verifyPayment,
+  handleWebhook

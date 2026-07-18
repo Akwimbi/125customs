@@ -3,6 +3,8 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
 
 // Layout Component
 import Layout from './components/layout/Layout';
@@ -33,6 +35,10 @@ function App() {
   return (
     <Router>
       <Routes>
+
+        {/* Public Routes - Auth */}
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
         {/* Public Routes - Landing Pages */}
         <Route element={<Layout />}>
           <Route path="/" element={<HomePage />} />

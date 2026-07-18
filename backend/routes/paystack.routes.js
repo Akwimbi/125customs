@@ -3,29 +3,53 @@
 const express = require('express');
 const router = express.Router();
 const paystackService = require('../services/paystack.service');
+const orderService = require('../services/order.service');
 const { protect } = require('../middleware/auth.middleware');
 const { validateInitializePayment, validateVerifyPayment } = require('../middleware/paystackValidation');
 
 // POST /api/paystack/initialize - Initialize payment (protected)
-router.post('/initialize', protect, validateInitializePayment, async (req, res) => {
+router.post('/initialize', validateInitializePayment, async (req, res) => {
   try {
-    const { email, amount, callbackUrl, metadata = {} } = req.body;
-    // Ensure email matches authenticated user (optional)
-    // if (req.user && req.user.email !== email) {
-    //   return res.status(403).json({ success: false, error: 'Unauthorized' });
-    // }
+    const { orderId } = req.body;
+    if (!orderId) {
+      return res.status(400).json({ success: false, error: 'Order ID is required' });
+    }
 
-    const result = await paystackService.initializePayment({
-      email,
-      amount,
-      callback_url: callbackUrl,
-      metadata
+    // Get the order
+    let order;
+    try {
+      order = await orderService.getOrderById(orderId);
+    } catch (err) {
+      if (err.message === 'Order not found') {
+        return res.status(404).json({ success: false, error: 'Order not found' });
+      }
+      throw err;
+    }
+
+    // Authorization: if order belongs to a user, ensure it matches the authenticated user
+    if (order.userId && req.user && order.userId !== req.user.id) {
+      return res.status(403).json({ success: false, error: 'Unauthorized' });
+    }
+    // Ensure order is pending
+    if (order.status !== 'pending') {
+      return res.status(400).json({ success: false, error: 'Order is not pending payment' });
+    }
+
+    // Initialize payment with Paystack
+    const paymentResult = await paystackService.initializePayment({
+      email: order.customerEmail,
+      amount: order.totalAmount,
+      callback_url: `${process.env.BASE_URL || 'http://localhost:3000'}/payment/callback`,
+      metadata: { orderId: order.id }
     });
+
+    // Save the payment reference to the order
+    await orderService.updateOrderPaymentReference(order.id, paymentResult.reference);
 
     res.json({
       success: true,
       message: 'Payment initialized',
-      data: result
+      data: paymentResult
     });
   } catch (error) {
     console.error('Error initializing payment:', error);
@@ -55,7 +79,7 @@ router.get('/verify/:reference', protect, validateVerifyPayment, async (req, res
 router.post('/webhook', async (req, res) => {
   try {
     const event = req.body;
-    const signature = req.headers['x-paystack-signature']; // Paystack uses x-paystack-signature header
+    const signature = req.headers['x-paystack-signature'];
 
     if (!signature) {
       return res.status(400).json({ success: false, error: 'Missing Paystack signature' });
@@ -63,13 +87,33 @@ router.post('/webhook', async (req, res) => {
 
     const result = paystackService.handleWebhook(event, signature);
 
-    // Depending on event type, we may update order status etc.
-    // For now, just acknowledge.
-    res.json({
-      success: true,
-      message: 'Webhook processed',
-      data: result
-    });
+    if (result.type === 'payment_success') {
+      const reference = result.reference;
+      // Verify the payment with Paystack
+      const verification = await paystackService.verifyPayment(reference);
+      if (verification.status === 'success') {
+        // Find order by paymentReference (we saved it during initialization)
+        const order = await orderService.getOrderByPaymentReference(reference);
+        if (!order) {
+          console.error(`Order not found for payment reference: ${reference}`);
+          return res.status(404).json({ success: false, error: 'Order not found' });
+        }
+        // Update order status to paid
+        await orderService.updateOrderStatus(order.id, 'paid');
+        // Create Paystack transaction record
+        await paystackService.createTransactionIfNotExists({
+          orderId: order.id,
+          reference,
+          amount: verification.amount / 100, // conversion from kobo to KES
+          channel: verification.channel,
+          status: verification.status
+        });
+      } else {
+        console.warn(`Payment verification failed for reference: ${reference}`);
+      }
+    }
+
+    res.json({ success: true, message: 'Webhook processed', data: result });
   } catch (error) {
     console.error('Error processing webhook:', error);
     if (error.message === 'Invalid webhook signature') {

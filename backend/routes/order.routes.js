@@ -57,7 +57,7 @@ router.get('/all', protect, admin, async (req, res) => {
 });
 
 // POST /api/orders - Create new order (protected)
-router.post('/', protect, async (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const { items, shippingAddress, paymentMethod } = req.body;
     

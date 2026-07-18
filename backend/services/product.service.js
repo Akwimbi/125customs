@@ -1,8 +1,7 @@
 // backend/services/product.service.js
 // Product service for 125Customs API - NOW USING PRISMA!
 
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('./prisma.service');
 
 // Get all products (with optional filters)
 const getProducts = async (filters = {}) => {

@@ -125,8 +125,8 @@ model OrderItem {
   subtotal             Decimal  @db.Decimal(10, 2)
   customizationDetails Json?    @map("customization_details")
   selectedOptions      String[] @default([]) @map("selected_options")
-  order                Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product              Product  @relation(fields: [productId], references: [id, onDelete: Restrict)
+  order                Order    @relation(fields: [orderId], references: [id])
+  product              Product  @relation(fields: [productId], references: [id])
 
   @@index([orderId], map: "order_item_order_id_idx")
   @@index([productId], map: "order_item_product_id_idx")
@@ -156,7 +156,7 @@ model Quote {
   createdAt          DateTime    @default(now()) @map("created_at")
   updatedAt          DateTime    @updatedAt @map("updated_at")
   items              QuoteItem[]
-  user               User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user               User?       @relation(fields: [userId], references: [id])
 
   @@index([userId], map: "quote_user_id_idx")
   @@index([status], map: "quote_status_idx")
@@ -173,42 +173,10 @@ model QuoteItem {
   unitPrice Decimal @map("unit_price") @db.Decimal(10, 2)
   subtotal  Decimal @db.Decimal(10, 2)
   product   Product @relation(fields: [productId], references: [id])
-  quote     Quote   @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  quote     Quote   @relation(fields: [quoteId], references: [id])
 
   @@index([quoteId], map: "quote_item_quote_id_idx")
   @@index([productId], map: "quote_item_product_id_idx")
   @@map("quote_items")
   notes          String?     @map("notes")
 }
-
-model Cart {
-  id          Int        @id @default(autoincrement())
-  sessionId   String     @unique @map("session_id")
-  userId      Int?       @map("user_id")
-  isB2B       Boolean    @default(false) @map("is_b2b")
-  companyName String?    @map("company_name")
-  createdAt   DateTime   @default(now()) @map("created_at")
-  updatedAt   DateTime   @updatedAt @map("updated_at")
-  items       CartItem[]
-  user        User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
-
-  @@index([sessionId], map: "cart_session_id_idx")
-  @@index([userId], map: "cart_user_id_idx")
-  @@map("carts")
-}
-
-model CartItem {
-  id                  Int      @id @default(autoincrement())
-  cartId              Int      @map("cart_id")
-  productId           Int      @map("product_id")
-  quantity            Int
-  customizationDetails Json?    @map("customization_details")
-  selectedOptions     String[] @default([]) @map("selected_options")
-  cart                Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
-  product             Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  @@index([cartId], map: "cart_item_cart_id_idx")
-  @@index([productId], map: "cart_item_product_id_idx")
-  @@map("cart_items")
-}
-

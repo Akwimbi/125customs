@@ -118,10 +118,11 @@ async function approveQuote(quoteId, { totalAmount, notes = '' }) {
 }
 
 // Reject quote (Admin)
+// Reject quote
 async function rejectQuote(quoteId, reason) {
   const quote = await prisma.quote.update({
-    where: { id: quoteId },
-    data: {
+    where: { id: parseInt(quoteId) },
+    data: { 
       status: 'rejected',
       notes: reason
     }

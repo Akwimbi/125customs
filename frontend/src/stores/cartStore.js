@@ -1,84 +1,87 @@
 // frontend/src/stores/cartStore.js
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { cartAPI } from '../services/api';
 
 const useCartStore = create(
   persist(
     (set, get) => ({
       // State
-      items: [],
-      totalItems: 0,
-      totalPrice: 0,
+      cart: null, // full cart object from backend
       loading: false,
       error: null,
 
       // Actions
-      addItem: (product, quantity = 1, options = {}) => {
-        const existingItemIndex = get().items.findIndex(
-          item => item.product.id === product.id && 
-                   JSON.stringify(item.options) === JSON.stringify(options)
-        );
-
-        if (existingItemIndex > -1) {
-          // Update quantity if item exists
-          const updatedItems = [...get().items];
-          updatedItems[existingItemIndex].quantity += quantity;
-          set({ 
-            items: updatedItems,
-            totalItems: get().totalItems + quantity,
-            totalPrice: get().totalPrice + (product.basePrice * quantity)
-          });
-        } else {
-          // Add new item
-          const newItem = {
-            product,
-            quantity,
-            options,
-            price: product.basePrice
-          };
-          set({ 
-            items: [...get().items, newItem],
-            totalItems: get().totalItems + quantity,
-            totalPrice: get().totalPrice + (product.basePrice * quantity)
-          });
+      fetchCart: async () => {
+        set({ loading: true, error: null });
+        try {
+          const cart = await cartAPI.get();
+          set({ cart, loading: false });
+          return cart;
+        } catch (err) {
+          set({ error: err.message, loading: false });
+          throw err;
         }
       },
 
-      removeItem: (index) => {
-        const item = get().items[index];
-        const updatedItems = get().items.filter((_, i) => i !== index);
-        set({
-          items: updatedItems,
-          totalItems: get().totalItems - item.quantity,
-          totalPrice: get().totalPrice - (item.price * item.quantity)
-        });
+      addItem: async (item) => {
+        set({ loading: true, error: null });
+        try {
+          const cart = await cartAPI.addItem(item);
+          set({ cart, loading: false });
+          return cart;
+        } catch (err) {
+          set({ error: err.message, loading: false });
+          throw err;
+        }
       },
 
-      updateQuantity: (index, newQuantity) => {
-        if (newQuantity < 1) return;
-        
-        const item = get().items[index];
-        const quantityDiff = newQuantity - item.quantity;
-        const updatedItems = [...get().items];
-        updatedItems[index].quantity = newQuantity;
-        
-        set({
-          items: updatedItems,
-          totalItems: get().totalItems + quantityDiff,
-          totalPrice: get().totalPrice + (item.price * quantityDiff)
-        });
+      updateItem: (itemId, updates) => async () => {
+        set({ loading: true, error: null });
+        try {
+          const cart = await cartAPI.updateItem(itemId, updates);
+          set({ cart, loading: false });
+          return cart;
+        } catch (err) {
+          set({ error: err.message, loading: false });
+          throw err;
+        }
       },
 
-      clearCart: () => {
-        set({ items: [], totalItems: 0, totalPrice: 0 });
+      removeItem: (itemId) => async () => {
+        set({ loading: true, error: null });
+        try {
+          const cart = await cartAPI.removeItem(itemId);
+          set({ cart, loading: false });
+          return cart;
+        } catch (err) {
+          set({ error: err.message, loading: false });
+          throw err;
+        }
       },
 
-      // Calculate totals (call this after any cart change)
-      calculateTotals: () => {
-        const { items } = get();
-        const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
-        const totalPrice = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-        set({ totalItems, totalPrice });
+      clearCart: async () => {
+        set({ loading: true, error: null });
+        try {
+          const cart = await cartAPI.clear();
+          set({ cart, loading: false });
+          return cart;
+        } catch (err) {
+          set({ error: err.message, loading: false });
+          throw err;
+        }
+      },
+
+      getSummary: async () => {
+        set({ loading: true, error: null });
+        try {
+          const summary = await cartAPI.getSummary();
+          set({ loading: false });
+          return summary;
+        } catch (err) {
+          set({ error: err.message, loading: false });
+          throw err;
+        }
       }
     }),
     {

@@ -21,7 +21,7 @@ function QuoteListPage() {
   const [sortBy, setSortBy] = useState('date-desc');
 
   useEffect(() => {
-    if (!isAuthenticated || user?.role !== 'b2b') {
+    if (!isAuthenticated || !(user?.audienceType === 'b2b' || user?.audienceType === 'both')) {
       navigate('/login');
     }
   }, [isAuthenticated, user, navigate]);

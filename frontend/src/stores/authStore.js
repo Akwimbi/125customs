@@ -15,16 +15,23 @@ const useAuthStore = create(
       login: async (email, password) => {
         set({ loading: true, error: null });
         try {
-          // TODO: Replace with actual API call
-          // const response = await axios.post('/api/auth/login', { email, password });
-          // set({ user: response.data.user, isAuthenticated: true, loading: false });
-          
-          // Placeholder
-          set({ 
-            user: { id: 1, name: 'Demo User', email }, 
-            isAuthenticated: true, 
-            loading: false 
+          const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:3001'}/api/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
           });
+          const data = await response.json();
+          if (data.success) {
+            set({ 
+              user: data.user, 
+              isAuthenticated: true, 
+              loading: false 
+            });
+            // Store token
+            localStorage.setItem('125customs_auth_token', data.token);
+          } else {
+            set({ error: data.error || 'Login failed', loading: false });
+          }
         } catch (error) {
           set({ error: error.message, loading: false });
         }
@@ -38,8 +45,23 @@ const useAuthStore = create(
       register: async (name, email, password) => {
         set({ loading: true, error: null });
         try {
-          // TODO: API call
-          set({ loading: false });
+          const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:3001'}/api/auth/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, email, password })
+          });
+          const data = await response.json();
+          if (data.success) {
+            set({ 
+              user: data.user, 
+              isAuthenticated: true, 
+              loading: false 
+            });
+            // Store token
+            localStorage.setItem('125customs_auth_token', data.token);
+          } else {
+            set({ error: data.error || 'Registration failed', loading: false });
+          }
         } catch (error) {
           set({ error: error.message, loading: false });
         }

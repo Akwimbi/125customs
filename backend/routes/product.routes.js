@@ -3,6 +3,7 @@
 const express = require('express');
 const router = express.Router();
 const productService = require('../services/product.service');
+const { protect, admin } = require('../middleware/auth.middleware');
 
 // GET /api/products - Get all products (with optional filters)
 router.get('/', async (req, res) => {
@@ -39,7 +40,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // POST /api/products - Create new product (Admin only)
-router.post('/', async (req, res) => {
+router.post('/', protect, admin, async (req, res) => {
   try {
     // TODO: Add authentication middleware
     const result = await productService.createProduct(req.body);
@@ -55,7 +56,7 @@ router.post('/', async (req, res) => {
 });
 
 // PUT /api/products/:id - Update product (Admin only)
-router.put('/:id', async (req, res) => {
+router.put('/:id', protect, admin, async (req, res) => {
   try {
     const result = await productService.updateProduct(req.params.id, req.body);
     if (result.success) {
@@ -74,7 +75,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // DELETE /api/products/:id - Delete product (Admin only)
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', protect, admin, async (req, res) => {
   try {
     const result = await productService.deleteProduct(req.params.id);
     if (result.success) {

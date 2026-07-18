@@ -56,10 +56,10 @@ router.get('/:id', protect, async (req, res) => {
   try {
     const quoteId = parseInt(req.params.id, 10);
     const quote = await quoteService.getQuoteById(quoteId);
-    // Optional: ensure user owns the quote or is admin
-    // if (quote.userId !== req.user.id && req.user.role !== 'admin') {
-    //   return res.status(403).json({ success: false, error: 'Not authorized' });
-    // }
+    // Ensure user owns the quote or is admin
+    if (quote.userId !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, error: 'Not authorized to access this quote' });
+    }
     res.json({ success: true, quote });
   } catch (error) {
     console.error('Error fetching quote:', error);

@@ -1,13 +1,24 @@
 // frontend/src/components/layout/Header.jsx
 // 125Customs Header Component with Navigation
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import useCartStore from '../../stores/cartStore';
 
 function Header() {
   const location = useLocation();
-  const { itemCount } = useCartStore();
-  
+  const { cart, fetchCart, loading, error } = useCartStore((state) => ({
+    cart: state.cart,
+    fetchCart: state.fetchCart,
+    loading: state.loading,
+    error: state.error
+  }));
+  const itemCount = cart ? cart.items?.reduce((sum, item) => sum + item.quantity, 0) : 0;
+
+  useEffect(() => {
+    // Fetch cart on mount
+    fetchCart().catch(err => console.error('Failed to fetch cart:', err));
+  }, [fetchCart]);
+
   const isActive = (path) => {
     return location.pathname === path ? 'text-red-600' : 'text-gray-700 hover:text-red-600';
   };
@@ -51,7 +62,7 @@ function Header() {
 
             {/* Mobile Menu Button */}
             <button className="md:hidden">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24  "fill="none" stroke="currentColor" viewBox="0 0 2">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>

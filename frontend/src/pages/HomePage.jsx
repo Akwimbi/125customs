@@ -6,84 +6,106 @@ import useProductStore from '../stores/productStore';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 
-// Mock data for now (will connect to backend later)
-const mockProducts = [
-  {
-    id: 1,
-    name: 'Industrial Asset Tag - Stainless Steel',
-    price: 350,
-    image: 'https://via.placeholder.com/300x300?text=Asset+Tag',
-    rating: 4.8,
-    reviews: 124,
-    audience: 'b2b',
-    badge: 'BESTSELLER'
-  },
-  {
-    id: 2,
-    name: 'Pet ID Tag - Brass (Custom Engraved)',
-    price: 800,
-    image: 'https://via.placeholder.com/300x300?text=Pet+Tag',
-    rating: 4.9,
-    reviews: 89,
-    audience: 'b2c',
-    badge: 'TOP RATED'
-  },
-  {
-    id: 3,
-    name: 'Trophy - Custom Engraved (Gold/Silver)',
-    price: 2500,
-    image: 'https://via.placeholder.com/300x300?text=Trophy',
-    rating: 4.7,
-    reviews: 56,
-    audience: 'b2c',
-    badge: 'NEW'
-  },
-  {
-    id: 4,
-    name: 'Industrial Equipment Label - Anodized Aluminum',
-    price: 450,
-    image: 'https://via.placeholder.com/300x300?text=Equipment+Label',
-    rating: 4.9,
-    reviews: 200,
-    audience: 'b2b',
-    badge: ''
-  },
-  {
-    id: 5,
-    name: 'Keychain - Personalized (Stainless Steel)',
-    price: 600,
-    image: 'https://via.placeholder.com/300x300?text=Keychain',
-    rating: 4.6,
-    reviews: 167,
-    audience: 'b2c',
-    badge: 'LIMITED OFFER'
-  },
-  {
-    id: 6,
-    name: 'Safety Sign - Custom Text (Reflective)',
-    price: 1200,
-    image: 'https://via.placeholder.com/300x300?text=Safety+Sign',
-    rating: 4.8,
-    reviews: 78,
-    audience: 'b2b',
-    badge: ''
-  }
-];
-
 function HomePage() {
   const { products, loading, error } = useProductStore();
+  const [mounted, setMounted] = useState(false);
+
+  // Fetch products on mount
+  useEffect(() => {
+    setMounted(true);
+    const fetchProducts = async () => {
+      try {
+        await productStore.getState().fetchProducts();
+      } catch (err) {
+        console.error('Failed to fetch products:', err);
+      }
+    };
+    fetchProducts();
+  }, []);
+
+  // Use mock data only if not mounted yet or if loading and no products
+  const displayProducts = !mounted ? [] : (loading && (!products || products.length === 0) ? [] : products);
+  
+  // Fallback to mock data if we have no products at all (initial load or error)
+  const finalProducts = displayProducts.length > 0 ? displayProducts : [
+    // These are just for initial layout - will be replaced by real data
+    {
+      id: 1,
+      name: 'Industrial Asset Tag - Stainless Steel',
+      price: 350,
+      image: 'https://via.placeholder.com/300x300?text=Asset+Tag',
+      rating: 4.8,
+      reviews: 124,
+      audience: 'b2b',
+      badge: 'BESTSELLER'
+    },
+    {
+      id: 2,
+      name: 'Pet ID Tag - Brass (Custom Engraved)',
+      price: 800,
+      image: 'https://via.placeholder.com/300x300?text=Pet+Tag',
+      rating: 4.9,
+      reviews: 89,
+      audience: 'b2c',
+      badge: 'TOP RATED'
+    },
+    {
+      id: 3,
+      name: 'Trophy - Custom Engraved (Gold/Silver)',
+      price: 2500,
+      image: 'https://via.placeholder.com/300x300?text=Trophy',
+      rating: 4.7,
+      reviews: 56,
+      audience: 'b2c',
+      badge: 'NEW'
+    }
+  ];
+
+  // Mock data for now (will connect to backend later)
+  // const mockProducts = [  // REMOVED - using real data now
+  //   {
+  //     id: 1,
+  //     name: 'Industrial Asset Tag - Stainless Steel',
+  //     price: 350,
+  //     image: 'https://via.placeholder.com/300x300?text=Asset+Tag',
+  //     rating: 4.8,
+  //     reviews: 124,
+  //     audience: 'b2b',
+  //     badge: 'BESTSELLER'
+  //   },
+  //   {
+  //     id: 2,
+  //     name: 'Pet ID Tag - Brass (Custom Engraved)',
+  //     price: 800,
+  //     image: 'https://via.placeholder.com/300x300?text=Pet+Tag',
+  //     rating: 4.9,
+  //     reviews: 89,
+  //     audience: 'b2c',
+  //     badge: 'TOP RATED'
+  //   },
+  //   {
+  //     id: 3,
+  //     name: 'Trophy - Custom Engraved (Gold/Silver)',
+  //     price: 2500,
+  //     image: 'https://via.placeholder.com/300x300?text=Trophy',
+  //     rating: 4.7,
+  //     reviews: 56,
+  //     audience: 'b2c',
+  //     badge: 'NEW'
+  //   }
+  // ];
+
+  // Auto-rotate hero carousel
   const [currentSlide, setCurrentSlide] = useState(0);
   
-  // Use mock data for now
-  const displayProducts = products.length > 0 ? products : mockProducts;
-  
-  // Auto-rotate hero carousel
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % 3);
-    }, 5000);
-    return () => clearInterval(timer);
-  }, []);
+    if (mounted) {
+      const timer = setInterval(() => {
+        setCurrentSlide((prev) => (prev + 1) % 3);
+      }, 5000);
+      return () => clearInterval(timer);
+    }
+  }, [mounted]);
 
   const heroSlides = [
     {
@@ -149,9 +171,9 @@ function HomePage() {
           {heroSlides.map((_, index) => (
             <button
               key={index}
-              className={`w-3 h-3 rounded-full transition-all ${
-                index === currentSlide ? 'bg-white w-8' : 'bg-white bg-opacity-50'
-              }`}
+              className={`w-3 h-3 rounded-full transition-all $
+                {index === currentSlide ? 'bg-white w-8' : 'bg-white bg-opacity-50'}
+              }
               onClick={() => setCurrentSlide(index)}
             />
           ))}
@@ -168,7 +190,7 @@ function HomePage() {
                 to={`/products?category=${category.toLowerCase().replace(' ', '-')}`}
                 className="flex flex-col items-center gap-2 group"
               >
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center group-hover:bg-red-50 transition-colors">
+                <div className="w-16 h-16 bg-gray-100 rounded-flex items-center justify-center group-hover:bg-red-50 transition-colors">
                   <span className="text-2xl">🏷️</span>
                 </div>
                 <span className="text-sm font-medium text-gray-700 group-hover:text-red-600 transition-colors">
@@ -184,14 +206,14 @@ function HomePage() {
       <section className="py-12">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-3xl font-bold">Today's Deals</h2>
+            <h2 className="text-3xl font-bold mb-6">Today's Deals</h2>
             <Link to="/products" className="text-red-600 hover:underline font-medium">
               See all deals →
             </Link>
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {displayProducts.slice(0, 6).map((product) => (
+            {finalProducts.slice(0, 6).map((product) => (
               <Card key={product.id} className="group cursor-pointer">
                 <Link to={`/products/${product.id}`}>
                   <div className="relative">
@@ -251,7 +273,7 @@ function HomePage() {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                <h3 className="text-2xl font-bold mb-2">Industrial & B2B</h3>
+                <h3 className="text-2xl font-bold mb-2">Industrial & B2B</h>
                 <p className="mb-4 opacity-90">Asset tags, equipment labels, safety signs</p>
                 <Link
                   to="/products?audience=b2b"
@@ -271,7 +293,7 @@ function HomePage() {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                <h3 className="text-2xl font-bold mb-2">Gifts & Personalized</h3>
+                <h3 className="text-2xl font-bold mb-2">Gifts & Personalized</h>
                 <p className="mb-4 opacity-90">Pet tags, keychains, trophies, keepsakes</p>
                 <Link
                   to="/products?audience=b2c"
@@ -291,7 +313,7 @@ function HomePage() {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                <h3 className="text-2xl font-bold mb-2">Bulk Orders</h3>
+                <h3 className="text-2xl font-bold mb-2">Bulk Orders</h>
                 <p className="mb-4 opacity-90">Discounted pricing for 50+ units</p>
                 <Link
                   to="/quote-request"
@@ -362,8 +384,8 @@ function HomePage() {
             ].map((feature, index) => (
               <div key={index} className="text-center">
                 <div className="text-5xl mb-4">{feature.icon}</div>
-                <h3 className="font-bold text-lg mb-2">{feature.title}</h3>
-                <p className="text-gray-600 text-sm">{feature.desc}</p>
+                <h3 className="font-bold text-lg mb-2>{feature.title}</h3>
+                <p className="text-gray-600 text-sm>{feature.desc}</p>
               </div>
             ))}
           </div>

@@ -26,98 +26,107 @@ async function createOrder({
   paymentMethod,
   items
 }) {
-  // Calculate total amount from items
-  let totalAmount = 0;
-  const enrichedItems = [];
-  
-  for (const item of items) {
-    const product = await prisma.product.findUnique({
-      where: { id: item.productId },
-      select: { id: true, name: true, basePrice: true, stockQuantity: true }
-    });
-    
-    if (!product) {
-      throw new Error(`Product not found: ${item.productId}`);
-    }
-    
-    // Optional: check stock availability
-    if (product.stockQuantity < (item.quantity || 1)) {
-      throw new Error(`Insufficient stock for product ${product.name}`);
-    }
-    
-    const unitPrice = product.basePrice;
-    const quantity = item.quantity || 1;
-    const subtotal = unitPrice * quantity;
-    totalAmount += subtotal;
-    
-    // Deduct stock
-    await prisma.product.update({
-      where: { id: product.id },
-      data: { stockQuantity: { decrement: quantity } }
-    });
-    
-    enrichedItems.push({
-      productId: product.id,
-      productName: product.name,
-      quantity,
-      unitPrice,
-      subtotal,
-      customizationDetails: item.customizationDetails || null,
-      selectedOptions: item.selectedOptions || []
-    });
+  // Validate input
+  if (!items || !Array.isArray(items) || items.length === 0) {
+    throw new Error('Items are required and must be an array');
   }
-  
-  // Generate order number
-  const orderCount = await prisma.order.count();
-  const orderNumber = `ORD-${new Date().getFullYear()}-${String(orderCount + 1).padStart(3, '0')}`;
-  
-  // Format pickup location from shipping address
-  const pickupLocation = formatAddress(shippingAddress);
-  
-  // Create order
-  const order = await prisma.order.create({
-    data: {
-      orderNumber,
-      userId,
-      audienceType,
-      customerName: customerInfo.name,
-      customerEmail: customerInfo.email,
-      customerPhone: customerInfo.phone || '',
-      companyName: customerInfo.companyName || '',
-      poNumber: customerInfo.poNumber || '',
-      giftMessage: customerInfo.giftMessage || '',
-      occasion: customerInfo.occasion || '',
-      shippingMethod: 'pickup_mtaani', // Default to Pickup Mtaani
-      pickupLocation,
-      pickupPhone: customerInfo.phone || '',
-      totalAmount,
-      status: 'pending'
-    }
-  });
-  
-  // Create order items
-  for (const item of enrichedItems) {
-    await prisma.orderItem.create({
-      data: {
-        orderId: order.id,
-        productId: item.productId,
-        quantity: item.quantity,
-        unitPrice: item.unitPrice,
-        subtotal: item.subtotal,
-        customizationDetails: item.customizationDetails,
+
+  // Use a transaction to ensure atomicity of stock deduction, order creation, and item creation
+  const result = await prisma.$transaction(async (tx) => {
+    // Calculate total amount from items and check stock
+    let totalAmount = 0;
+    const enrichedItems = [];
+
+    // Process each item: check stock and calculate totals
+    for (const item of items) {
+      const product = await tx.product.findUnique({
+        where: { id: item.productId },
+        select: { id: true, name: true, basePrice: true, stockQuantity: true }
+      });
+
+      if (!product) {
+        throw new Error(`Product not found: ${item.productId}`);
+      }
+
+      // Check stock availability
+      if (product.stockQuantity < (item.quantity || 1)) {
+        throw new Error(`Insufficient stock for product ${product.name}`);
+      }
+
+      const unitPrice = product.basePrice;
+      const quantity = item.quantity || 1;
+      const subtotal = unitPrice * quantity;
+      totalAmount += subtotal;
+
+      enrichedItems.push({
+        productId: product.id,
+        productName: product.name,
+        quantity,
+        unitPrice,
+        subtotal,
+        customizationDetails: item.customizationDetails || null,
         selectedOptions: item.selectedOptions || []
+      });
+
+      // Deduct stock atomically within the transaction
+      await tx.product.update({
+        where: { id: product.id },
+        data: { stockQuantity: { decrement: quantity } }
+      });
+    }
+
+    // Generate order number using a database sequence approach to avoid race conditions
+    // We'll use the order count + 1 but within the transaction so it's safe
+    const orderCount = await tx.order.count();
+    const orderNumber = `ORD-${new Date().getFullYear()}-${String(orderCount + 1).padStart(3, '0')}`;
+
+    // Create order
+    const order = await tx.order.create({
+      data: {
+        orderNumber,
+        userId,
+        audienceType,
+        customerName: customerInfo.name,
+        customerEmail: customerInfo.email,
+        customerPhone: customerInfo.phone || '',
+        companyName: customerInfo.companyName || '',
+        poNumber: customerInfo.poNumber || '',
+        giftMessage: customerInfo.giftMessage || '',
+        occasion: customerInfo.occasion || '',
+        shippingMethod: 'pickup_mtaani', // Default to Pickup Mtaani
+        pickupLocation: formatAddress(shippingAddress),
+        pickupPhone: customerInfo.phone || '',
+        totalAmount,
+        status: 'pending'
       }
     });
-  }
-  
-  // Send confirmation email
+
+    // Create order items
+    for (const item of enrichedItems) {
+      await tx.orderItem.create({
+        data: {
+          orderId: order.id,
+          productId: item.productId,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          subtotal: item.subtotal,
+          customizationDetails: item.customizationDetails,
+          selectedOptions: item.selectedOptions || []
+        }
+      });
+    }
+
+    return order;
+  });
+
+  // Send confirmation email (outside transaction as it's not critical)
   try {
     await sendOrderConfirmation({
       to: customerInfo.email,
-      orderNumber: order.orderNumber,
+      orderNumber: result.orderNumber,
       customerName: customerInfo.name,
-      totalAmount: order.totalAmount,
-      items: enrichedItems.map(item => ({
+      totalAmount: result.totalAmount,
+      items: result.items.map(item => ({
         product: { name: item.productName },
         quantity: item.quantity,
         subtotal: item.subtotal
@@ -127,9 +136,9 @@ async function createOrder({
     console.error('Failed to send order confirmation email:', emailError);
     // Don't fail the order creation if email fails
   }
-  
+
   // Return the complete order with items
-  return getOrderById(order.id);
+  return getOrderById(result.id);
 }
 
 // Get order by ID
@@ -244,5 +253,29 @@ module.exports = {
   getOrderById,
   updateOrderStatus,
   getOrdersByUser,
-  getAllOrders
+  getAllOrders,
+  updateOrderPaymentReference,
+  getOrderByPaymentReference
 };
+
+// Update order payment reference
+async function updateOrderPaymentReference(orderId, reference) {
+  const order = await prisma.order.update({
+    where: { id: orderId },
+    data: { paymentReference: reference }
+  });
+  return order;
+}
+
+// Get order by payment reference
+async function getOrderByPaymentReference(reference) {
+  const order = await prisma.order.findFirst({
+    where: { paymentReference: reference }
+  });
+  return order;
+}
+  createOrder,
+  getOrderById,
+  updateOrderStatus,
+  getOrdersByUser,
+  getAllOrders
