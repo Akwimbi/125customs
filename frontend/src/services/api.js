@@ -3,7 +3,7 @@
 
 import { getAuthToken, getSessionId, setSessionId } from '../utils/storage';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 // Helper function for API requests
 const apiRequest = async (endpoint, options = {}) => {
