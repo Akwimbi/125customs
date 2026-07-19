@@ -15,7 +15,7 @@ function HomePage() {
     setMounted(true);
     const fetchProducts = async () => {
       try {
-        await productStore.getState().fetchProducts();
+        await useProductStore.getState().fetchProducts();
       } catch (err) {
         console.error('Failed to fetch products:', err);
       }

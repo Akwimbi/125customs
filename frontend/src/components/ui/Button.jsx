@@ -56,6 +56,14 @@ const Button = ({
     );
   }
 
+  if (Component !== 'button') {
+    return (
+      <Component className={classes} {...props}>
+        {content}
+      </Component>
+    );
+  }
+
   return (
     <button type="button" disabled={disabled || loading} className={classes} {...props}>
       {content}
