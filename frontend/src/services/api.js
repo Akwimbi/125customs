@@ -47,7 +47,7 @@ const apiRequest = async (endpoint, options = {}) => {
 };
 
 // Products API
-const productsAPI = {
+export const productsAPI = {
   getAll: (params = {}) => {
     const query = new URLSearchParams(params).toString();
     return apiRequest(`/products${query ? `?${query}` : ''}`);
@@ -57,19 +57,19 @@ const productsAPI = {
 };
 
 // Categories API
-const categoriesAPI = {
+export const categoriesAPI = {
   getAll: () => apiRequest('/categories'),
   getById: (id) => apiRequest(`/categories/${id}`)
 };
 
 // Services API
-const servicesAPI = {
+export const servicesAPI = {
   getAll: () => apiRequest('/services'),
   getById: (id) => apiRequest(`/services/${id}`)
 };
 
 // Cart API
-const cartAPI = {
+export const cartAPI = {
   // Get cart for session/user
   get: () => apiRequest('/cart'),
   // Create or replace cart (sync)
@@ -87,7 +87,7 @@ const cartAPI = {
 };
 
 // Orders API
-const ordersAPI = {
+export const ordersAPI = {
   create: (orderData) => apiRequest('/orders', { method: 'POST', body: JSON.stringify(orderData) }),
   getById: (id) => apiRequest(`/orders/${id}`),
   getByUser: () => apiRequest('/orders'),
@@ -99,23 +99,14 @@ const ordersAPI = {
 };
 
 // Quotes API
-const quotesAPI = {
+export const quotesAPI = {
   create: (quoteData) => apiRequest('/quotes', { method: 'POST', body: JSON.stringify(quoteData) }),
   getById: (id) => apiRequest(`/quotes/${id}`),
   getByUser: () => apiRequest('/quotes')
 };
 
-export default {
 // Paystack API
-const paystackAPI = {
+export const paystackAPI = {
   initialize: (orderId) => apiRequest('/paystack/initialize', { method: 'POST', body: JSON.stringify({ orderId }) }),
   verify: (reference) => apiRequest(`/paystack/verify/${reference}`)
 };
-  products: productsAPI,
-  categories: categoriesAPI,
-  services: servicesAPI,
-  cart: cartAPI,
-  orders: ordersAPI,
-  quotes: quotesAPI
-};
-module.exports = {productsAPI, categoriesAPI, servicesAPI, cartAPI, ordersAPI, quotesAPI, paystackAPI};

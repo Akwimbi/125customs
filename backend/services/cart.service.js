@@ -36,15 +36,19 @@ async function syncCart({ sessionId, userId = null, isB2B = false, companyName =
     where: { cartId: cart.id }
   });
 
-  // Add new items
+  // Add new items - price is intentionally NOT taken from the client or stored here.
+  // It's always computed fresh from the product table when the cart is read (see
+  // getCartBySessionId below), so there's nothing here for a client to tamper with.
   for (const item of items) {
+    const product = await prisma.product.findUnique({ where: { id: item.productId } });
+    if (!product) {
+      throw new Error(`Product not found: ${item.productId}`);
+    }
     await prisma.cartItem.create({
       data: {
         cartId: cart.id,
         productId: item.productId,
         quantity: item.quantity,
-        unitPrice: item.unitPrice,
-        subtotal: item.quantity * item.unitPrice,
         customizationDetails: item.customizationDetails || null,
         selectedOptions: item.selectedOptions || []
       }
@@ -75,25 +79,32 @@ async function getCartBySessionId(sessionId) {
     return null;
   }
 
-  // Calculate totals
-  const subtotal = cart.items.reduce((sum, item) => sum + Number(item.subtotal), 0);
-  const itemCount = cart.items.reduce((sum, item) => sum + item.quantity, 0);
+  // Price is always computed here, from the product's current basePrice - never from
+  // anything stored on the cart item itself. This is the only source of truth for cart pricing.
+  const itemsWithPricing = cart.items.map(item => {
+    const unitPrice = Number(item.product.basePrice);
+    const itemSubtotal = unitPrice * item.quantity;
+    return {
+      id: item.id,
+      productId: item.productId,
+      quantity: item.quantity,
+      unitPrice,
+      subtotal: itemSubtotal,
+      customizationDetails: item.customizationDetails,
+      selectedOptions: item.selectedOptions,
+      product: item.product
+    };
+  });
+
+  const subtotal = itemsWithPricing.reduce((sum, item) => sum + item.subtotal, 0);
+  const itemCount = itemsWithPricing.reduce((sum, item) => sum + item.quantity, 0);
 
   return {
     id: cart.id,
     sessionId: cart.sessionId,
     isB2B: cart.isB2B,
     companyName: cart.companyName,
-    items: cart.items.map(item => ({
-      id: item.id,
-      productId: item.productId,
-      quantity: item.quantity,
-      unitPrice: Number(item.unitPrice),
-      subtotal: Number(item.subtotal),
-      customizationDetails: item.customizationDetails,
-      selectedOptions: item.selectedOptions,
-      product: item.product
-    })),
+    items: itemsWithPricing,
     subtotal,
     itemCount,
     updatedAt: cart.updatedAt

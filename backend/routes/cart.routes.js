@@ -82,11 +82,11 @@ router.post('/', validateSyncCart, async (req, res) => {
         return res.status(400).json({ success: false, error: `Product not found: ${item.productId}` });
       }
       const quantity = item.quantity || 1;
-      const unitPrice = parseFloat(item.unitPrice) || parseFloat(product.basePrice);
+      // Price always comes from the product record, never from the client - the cart
+      // service doesn't store price at all anymore, it's recomputed on every read.
       processedItems.push({
         productId: item.productId,
         quantity,
-        unitPrice,
         customizationDetails: item.customizationDetails || null,
         selectedOptions: item.selectedOptions || []
       });
@@ -377,11 +377,10 @@ router.post('/sync', validateSyncCart, async (req, res) => {
         return res.status(400).json({ success: false, error: `Product not found: ${item.productId}` });
       }
       const quantity = item.quantity || 1;
-      const unitPrice = parseFloat(item.unitPrice) || parseFloat(product.basePrice);
+      // Price always comes from the product record, never from the client.
       processedItems.push({
         productId: item.productId,
         quantity,
-        unitPrice,
         customizationDetails: item.customizationDetails || null,
         selectedOptions: item.selectedOptions || []
       });

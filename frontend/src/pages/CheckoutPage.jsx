@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom';
 import { cartAPI, ordersAPI, paystackAPI } from '../services/api';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
-import Select from '../components/ui/Select'; // Assuming we have a Select component
 import { toast } from 'react-hot-toast';
 
 function CheckoutPage() {
@@ -239,7 +238,7 @@ function CheckoutPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Delivery Method</label>
-                <Select 
+                <select 
                   value={formData.deliveryMethod} 
                   onChange={(e) => setFormData(prev => ({ ...prev, deliveryMethod: e.target.value }))}
                   className="w-full"
@@ -252,7 +251,7 @@ function CheckoutPage() {
                 {formData.deliveryMethod === 'pickup' ? (
                   <>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Pickup Location</label>
-                    <Select 
+                    <select 
                       value={formData.pickupLocation} 
                       onChange={(e) => setFormData(prev => ({ ...prev, pickupLocation: e.target.value }))}
                       className="w-full"
@@ -337,7 +336,7 @@ function CheckoutPage() {
   return (
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="container mx-auto px-4 text-center">
-        <h1 className="text-3xl font-bold mb-6">Order Placed</h>
+        <h1 className="text-3xl font-bold mb-6">Order Placed</h1>
         <p className="text-gray-600 mb-6">Thank you for your order! Your order number is {order?.orderNumber || 'N/A'}.</p>
         <Button 
           onClick={() => navigate('/')}

@@ -1,1 +1,8 @@
-const request = require('supertest');\nconst app = require('../app');\n\ntest('GET /api', async () => {\n  const res = await request(app).get('/api');\n  expect(res.statusCode).toBe(200);\n  expect(res.body.success).toBe(true);\n});
+const request = require('supertest');
+const app = require('../app');
+
+test('GET /api', async () => {
+  const res = await request(app).get('/api');
+  expect(res.statusCode).toBe(200);
+  expect(res.body.success).toBe(true);
+});

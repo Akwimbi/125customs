@@ -126,7 +126,7 @@ model OrderItem {
   customizationDetails Json?    @map("customization_details")
   selectedOptions      String[] @default([]) @map("selected_options")
   order                Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product              Product  @relation(fields: [productId], references: [id, onDelete: Restrict)
+  product              Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
 
   @@index([orderId], map: "order_item_order_id_idx")
   @@index([productId], map: "order_item_product_id_idx")
@@ -152,6 +152,7 @@ model Quote {
   taxComplianceValid DateTime?   @map("tax_compliance_valid")
   compliancePackUrl  String?     @map("compliance_pack_url")
   totalAmount        Decimal?    @map("total_amount") @db.Decimal(10, 2)
+  notes              String?
   validUntil         DateTime    @map("valid_until")
   createdAt          DateTime    @default(now()) @map("created_at")
   updatedAt          DateTime    @updatedAt @map("updated_at")
@@ -178,7 +179,6 @@ model QuoteItem {
   @@index([quoteId], map: "quote_item_quote_id_idx")
   @@index([productId], map: "quote_item_product_id_idx")
   @@map("quote_items")
-  notes          String?     @map("notes")
 }
 
 model Cart {
@@ -210,5 +210,20 @@ model CartItem {
   @@index([cartId], map: "cart_item_cart_id_idx")
   @@index([productId], map: "cart_item_product_id_idx")
   @@map("cart_items")
+}
+
+model PaystackTransaction {
+  id        Int       @id @default(autoincrement())
+  orderId   Int       @unique @map("order_id")
+  reference String    @unique
+  amount    Decimal   @db.Decimal(10, 2)
+  channel   String?
+  status    String
+  paidAt    DateTime? @map("paid_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  order     Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId], map: "paystack_transaction_order_id_idx")
+  @@map("paystack_transactions")
 }
 

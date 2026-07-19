@@ -171,9 +171,7 @@ function HomePage() {
           {heroSlides.map((_, index) => (
             <button
               key={index}
-              className={`w-3 h-3 rounded-full transition-all $
-                {index === currentSlide ? 'bg-white w-8' : 'bg-white bg-opacity-50'}
-              }
+              className={`w-3 h-3 rounded-full transition-all ${index === currentSlide ? 'bg-white w-8' : 'bg-white bg-opacity-50'}`}
               onClick={() => setCurrentSlide(index)}
             />
           ))}
@@ -273,7 +271,7 @@ function HomePage() {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                <h3 className="text-2xl font-bold mb-2">Industrial & B2B</h>
+                <h3 className="text-2xl font-bold mb-2">Industrial & B2B</h3>
                 <p className="mb-4 opacity-90">Asset tags, equipment labels, safety signs</p>
                 <Link
                   to="/products?audience=b2b"
@@ -293,7 +291,7 @@ function HomePage() {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                <h3 className="text-2xl font-bold mb-2">Gifts & Personalized</h>
+                <h3 className="text-2xl font-bold mb-2">Gifts & Personalized</h3>
                 <p className="mb-4 opacity-90">Pet tags, keychains, trophies, keepsakes</p>
                 <Link
                   to="/products?audience=b2c"
@@ -313,7 +311,7 @@ function HomePage() {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                <h3 className="text-2xl font-bold mb-2">Bulk Orders</h>
+                <h3 className="text-2xl font-bold mb-2">Bulk Orders</h3>
                 <p className="mb-4 opacity-90">Discounted pricing for 50+ units</p>
                 <Link
                   to="/quote-request"
@@ -384,8 +382,8 @@ function HomePage() {
             ].map((feature, index) => (
               <div key={index} className="text-center">
                 <div className="text-5xl mb-4">{feature.icon}</div>
-                <h3 className="font-bold text-lg mb-2>{feature.title}</h3>
-                <p className="text-gray-600 text-sm>{feature.desc}</p>
+                <h3 className="font-bold text-lg mb-2">{feature.title}</h3>
+                <p className="text-gray-600 text-sm">{feature.desc}</p>
               </div>
             ))}
           </div>

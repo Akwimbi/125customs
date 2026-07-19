@@ -2,9 +2,9 @@
 // 125Customs Login Page
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../stores/authStore';
-import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
+import useAuthStore from '../stores/authStore';
+import Button from '../components/ui/Button';
+import Input from '../components/ui/Input';
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -71,7 +71,7 @@ function LoginPage() {
             className="w-full"
           >
             Sign In
-          </button>
+          </Button>
           
           <div className="text-sm text-center">
             <p className="text-gray-500">

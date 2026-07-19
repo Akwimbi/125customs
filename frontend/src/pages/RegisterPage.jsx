@@ -2,9 +2,9 @@
 // 125Customs Register Page
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../stores/authStore';
-import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
+import useAuthStore from '../stores/authStore';
+import Button from '../components/ui/Button';
+import Input from '../components/ui/Input';
 
 function RegisterPage() {
   const navigate = useNavigate();
@@ -84,7 +84,7 @@ function RegisterPage() {
             className="w-full"
           >
             Create Account
-          </button>
+          </Button>
           
           <div className="text-sm text-center">
             <p className="text-gray-500">
