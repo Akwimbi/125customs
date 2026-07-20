@@ -23,17 +23,40 @@ function HomePage() {
     fetchProducts();
   }, []);
 
+  // Normalize to a single consistent shape for rendering, regardless of source.
+  // productStore's data matches the real backend schema (basePrice, audienceType,
+  // no image/rating/reviews/badge - those are display-only and don't exist there),
+  // while the hardcoded fallback below uses a simpler ad-hoc shape. Without this,
+  // whichever source was non-empty got rendered with unmatched field names -
+  // e.g. product.price being undefined when the data actually had basePrice,
+  // crashing on product.price.toLocaleString().
+  const placeholderImage = (name) => {
+    const initial = (name || '?').trim().charAt(0).toUpperCase();
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><rect width="300" height="300" fill="#8B4513"/><text x="150" y="165" font-size="96" fill="#ffffff" text-anchor="middle" font-family="sans-serif">${initial}</text></svg>`;
+    return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+  };
+
+  const normalizeProduct = (product) => ({
+    id: product.id,
+    name: product.name,
+    price: product.price ?? product.basePrice ?? 0,
+    image: product.image || placeholderImage(product.name),
+    rating: product.rating ?? 4.5,
+    reviews: product.reviews ?? 0,
+    audience: product.audience ?? product.audienceType ?? 'both',
+    badge: product.badge
+  });
+
   // Use mock data only if not mounted yet or if loading and no products
   const displayProducts = !mounted ? [] : (loading && (!products || products.length === 0) ? [] : products);
   
   // Fallback to mock data if we have no products at all (initial load or error)
-  const finalProducts = displayProducts.length > 0 ? displayProducts : [
+  const finalProducts = (displayProducts.length > 0 ? displayProducts : [
     // These are just for initial layout - will be replaced by real data
     {
       id: 1,
       name: 'Industrial Asset Tag - Stainless Steel',
       price: 350,
-      image: 'https://via.placeholder.com/300x300?text=Asset+Tag',
       rating: 4.8,
       reviews: 124,
       audience: 'b2b',
@@ -43,7 +66,6 @@ function HomePage() {
       id: 2,
       name: 'Pet ID Tag - Brass (Custom Engraved)',
       price: 800,
-      image: 'https://via.placeholder.com/300x300?text=Pet+Tag',
       rating: 4.9,
       reviews: 89,
       audience: 'b2c',
@@ -53,13 +75,12 @@ function HomePage() {
       id: 3,
       name: 'Trophy - Custom Engraved (Gold/Silver)',
       price: 2500,
-      image: 'https://via.placeholder.com/300x300?text=Trophy',
       rating: 4.7,
       reviews: 56,
       audience: 'b2c',
       badge: 'NEW'
     }
-  ];
+  ]).map(normalizeProduct);
 
   // Mock data for now (will connect to backend later)
   // const mockProducts = [  // REMOVED - using real data now
@@ -264,10 +285,9 @@ function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* B2B Category */}
             <div className="relative h-80 rounded-lg overflow-hidden group cursor-pointer">
-              <img
-                src="https://via.placeholder.com/600x400?text=Industrial+Tags"
-                alt="B2B Industrial"
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+              <div
+                aria-hidden="true"
+                className="w-full h-full bg-gradient-to-br from-red-700 to-red-900 group-hover:scale-110 transition-transform duration-500"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
@@ -284,10 +304,9 @@ function HomePage() {
 
             {/* B2C Category */}
             <div className="relative h-80 rounded-lg overflow-hidden group cursor-pointer">
-              <img
-                src="https://via.placeholder.com/600x400?text=Personalized+Gifts"
-                alt="B2C Gifts"
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+              <div
+                aria-hidden="true"
+                className="w-full h-full bg-gradient-to-br from-blue-700 to-blue-900 group-hover:scale-110 transition-transform duration-500"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
@@ -304,10 +323,9 @@ function HomePage() {
 
             {/* Bulk Orders */}
             <div className="relative h-80 rounded-lg overflow-hidden group cursor-pointer">
-              <img
-                src="https://via.placeholder.com/600x400?text=Bulk+Orders"
-                alt="Bulk Orders"
-                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+              <div
+                aria-hidden="true"
+                className="w-full h-full bg-gradient-to-br from-green-700 to-green-900 group-hover:scale-110 transition-transform duration-500"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
