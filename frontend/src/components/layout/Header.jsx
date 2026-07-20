@@ -1,17 +1,20 @@
 // frontend/src/components/layout/Header.jsx
 // 125Customs Header Component with Navigation
 import React, { useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import useCartStore from '../../stores/cartStore';
+import useAuthStore from '../../stores/authStore';
 
 function Header() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { cart, fetchCart, loading, error } = useCartStore((state) => ({
     cart: state.cart,
     fetchCart: state.fetchCart,
     loading: state.loading,
     error: state.error
   }));
+  const { user, isAuthenticated, logout } = useAuthStore();
   const itemCount = cart ? cart.items?.reduce((sum, item) => sum + item.quantity, 0) : 0;
 
   useEffect(() => {
@@ -49,6 +52,28 @@ function Header() {
 
           {/* Cart & User */}
           <div className="flex items-center space-x-4">
+            {/* Account */}
+            {isAuthenticated ? (
+              <div className="hidden md:flex items-center space-x-3">
+                {user?.role === 'admin' && (
+                  <Link to="/admin/dashboard" className="text-sm text-gray-700 hover:text-red-600 transition duration-300">
+                    Admin
+                  </Link>
+                )}
+                <span className="text-sm text-gray-700">Hi, {user?.name || 'there'}</span>
+                <button
+                  onClick={() => { logout(); navigate('/'); }}
+                  className="text-sm text-gray-500 hover:text-red-600 transition duration-300"
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <Link to="/login" className="hidden md:block text-sm text-gray-700 hover:text-red-600 transition duration-300">
+                Login
+              </Link>
+            )}
+
             {/* Cart Icon */}
             <Link to="/cart" className="relative">
               <svg className="w-6 h-6 text-gray-700 hover:text-red-600 transition duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
