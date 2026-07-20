@@ -1,11 +1,11 @@
 // frontend/src/components/layout/Layout.jsx
 // Main Layout Component - Wraps all pages with Header + Main + Footer
 import React from 'react';
+import { Outlet } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 
 const Layout = ({
-  children,
   showHeader = true,
   showFooter = true,
   containerWidth = 'default', // 'narrow', 'default', 'wide', 'full'
@@ -23,10 +23,10 @@ const Layout = ({
       {/* Header */}
       {showHeader && <Header />}
 
-      {/* Main Content */}
+      {/* Main Content - Outlet renders whichever route matched, e.g. HomePage */}
       <main className="flex-1">
         <div className={containerClasses[containerWidth]}>
-          {children}
+          <Outlet />
         </div>
       </main>
 
@@ -35,30 +35,5 @@ const Layout = ({
     </div>
   );
 };
-
-// Layout variants for different page types
-Layout.Landing = ({ children }) => (
-  <Layout showHeader={true} showFooter={true} containerWidth="full">
-    {children}
-  </Layout>
-);
-
-Layout.Dashboard = ({ children }) => (
-  <Layout showHeader={true} showFooter={false} containerWidth="default">
-    {children}
-  </Layout>
-);
-
-Layout.Auth = ({ children }) => (
-  <Layout showHeader={false} showFooter={false} containerWidth="narrow">
-    {children}
-  </Layout>
-);
-
-Layout.Checkout = ({ children }) => (
-  <Layout showHeader={true} showFooter={false} containerWidth="default">
-    {children}
-  </Layout>
-);
 
 export default Layout;
