@@ -13,8 +13,21 @@ const app = express();
 app.use(helmet()); // Adds security headers
 
 // CORS configuration
+// In development, Vite's dev server port isn't stable - it auto-increments
+// whenever its configured port is already taken, which happens often on this
+// machine. Hardcoding a single origin means CORS breaks every time that
+// happens. So in development, allow any localhost/127.0.0.1 origin regardless
+// of port; in production, stay strict to exactly FRONTEND_URL.
+const isDev = process.env.NODE_ENV !== 'production';
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: isDev
+    ? (origin, callback) => {
+        if (!origin || /^https?:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin)) {
+          return callback(null, true);
+        }
+        callback(new Error('Not allowed by CORS'));
+      }
+    : (process.env.FRONTEND_URL || 'http://localhost:5173'),
   credentials: true
 }));
 
