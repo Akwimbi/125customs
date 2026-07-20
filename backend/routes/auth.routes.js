@@ -8,7 +8,7 @@ const { protect } = require('../middleware/auth.middleware');
 // POST /api/auth/register - Register new user
 router.post('/register', async (req, res) => {
   try {
-    const { email, password, name, role, audienceType } = req.body;
+    const { email, password, name, audienceType } = req.body;
 
     // Validate input
     if (!email || !password) {
@@ -18,13 +18,33 @@ router.post('/register', async (req, res) => {
       });
     }
 
-    // Use auth service
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(email)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Please provide a valid email address'
+      });
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({
+        success: false,
+        error: 'Password must be at least 8 characters'
+      });
+    }
+
+    const allowedAudienceTypes = ['b2b', 'b2c', 'both'];
+    const safeAudienceType = allowedAudienceTypes.includes(audienceType) ? audienceType : 'both';
+
+    // role is never accepted from the client - every self-registration is a
+    // customer account. Promoting someone to admin is a deliberate, separate
+    // action, not something a signup form should ever be able to trigger.
     const result = await authService.register({ 
       email, 
       password, 
       name, 
-      role: role || 'customer',
-      audienceType: audienceType || 'both'
+      role: 'customer',
+      audienceType: safeAudienceType
     });
 
     if (!result.success) {

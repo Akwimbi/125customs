@@ -1,12 +1,8 @@
 // backend/middleware/auth.middleware.js
 // Authentication middleware for 125Customs API
 const jwt = require('jsonwebtoken');
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../services/prisma.service');
 require('dotenv').config();
-
-// Prisma singleton
-const prisma = globalThis.prisma || new PrismaClient();
-if (process.env.NODE_ENV === 'development') globalThis.prisma = prisma;
 
 // Protect routes - verify JWT token
 const protect = async (req, res, next) => {
@@ -19,8 +15,6 @@ const protect = async (req, res, next) => {
   ) {
     try {
       // Get token from header
-      console.log('Protect middleware: token:', token ? token.substring(0,10) + '...' : 'null');
-      console.log('Protect middleware: JWT_SECRET present:', !!process.env.JWT_SECRET);
       token = req.headers.authorization.split(' ')[1];
 
       // Verify token
