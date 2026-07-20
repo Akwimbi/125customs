@@ -12,6 +12,7 @@ function ProductDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [product, setProduct] = useState(null);
+  const [relatedProducts, setRelatedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [customText, setCustomText] = useState('');
@@ -38,6 +39,15 @@ function ProductDetailPage() {
           });
           setSelectedOptions(defaults);
         }
+        // Fetch similar products in the same category
+        try {
+          const relatedRes = await productsAPI.getByCategory(res.product.category);
+          if (relatedRes.success) {
+            setRelatedProducts(relatedRes.products || []);
+          }
+        } catch (relatedError) {
+          console.error('Error fetching related products:', relatedError);
+        }
       }
     } catch (error) {
       console.error('Error fetching product:', error);
@@ -59,7 +69,7 @@ function ProductDetailPage() {
         quantity: quantity,
         customText: customText,
         options: selectedOptions,
-        image: product.images ? product.images[0] : null
+        image: product.imageUrl || null
       };
 
       await cartAPI.addItem('default', cartItem);
@@ -321,7 +331,7 @@ function ProductDetailPage() {
           <h2 className="font-display text-2xl font-bold mb-8">Similar {product.category.replace('_', ' ')}</h2>
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {products
+            {relatedProducts
               .filter(p => p.category === product.category && p.id !== product.id)
               .slice(0, 4)
               .map((related) => (

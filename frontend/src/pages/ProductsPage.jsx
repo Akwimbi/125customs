@@ -270,6 +270,12 @@ function ProductsPage() {
                         src={product.imageUrl || 'https://via.placeholder.com/300x300?text=Product'}
                         alt={product.name}
                         className="w-full h-full object-cover rounded-lg group-hover:scale-105 transition-transform duration-300"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          const initial = (product.name || '?').trim().charAt(0).toUpperCase();
+                          const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><rect width="300" height="300" fill="#8B4513"/><text x="150" y="165" font-size="96" fill="#ffffff" text-anchor="middle" font-family="sans-serif">${initial}</text></svg>`;
+                          e.target.src = `data:image/svg+xml,${encodeURIComponent(svg)}`;
+                        }}
                       />
                     </div>
 
