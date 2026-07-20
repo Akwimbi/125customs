@@ -29,6 +29,7 @@ function Header() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
+            <img src="/logo.jpeg" alt="125 Customs" className="w-10 h-10 rounded-full object-cover" />
             <span className="text-2xl font-bold text-red-600">125</span>
             <span className="text-xl font-semibold text-gray-800">Customs</span>
           </Link>
