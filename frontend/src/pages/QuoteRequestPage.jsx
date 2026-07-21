@@ -3,13 +3,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useAuthStore from '../stores/authStore';
+import { quotesAPI } from '../services/api';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Card from '../components/ui/Card';
 
 function QuoteRequestPage() {
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+  const { user, isAuthenticated } = useAuthStore();
   const [formData, setFormData] = useState({
     companyName: '',
     contactName: '',
@@ -31,26 +32,63 @@ function QuoteRequestPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitting(true);
 
     // Validate
     if (!formData.companyName || !formData.contactName || !formData.email || !formData.phone) {
       alert('Please fill in all required fields.');
-      setSubmitting(false);
       return;
     }
 
-    try {
-      // TODO: Send to backend
-      await new Promise(resolve => setTimeout(resolve, 1500));
+    if (!isAuthenticated) {
+      alert('Please log in or create an account first - quote requests are tied to your account so you can track their status.');
+      navigate('/login');
+      return;
+    }
 
-      setSubmitted(true);
-      
-      // Redirect after 3 seconds
-      setTimeout(() => {
-        navigate('/quote-success');
-      }, 3000);
+    setSubmitting(true);
+
+    // Fold the extra context (category, timeline, compliance need, KRA PIN) into
+    // the project description - the backend's create-quote endpoint only accepts
+    // a specific set of fields (companyName, contactPerson, email, phone,
+    // projectDescription, quantity, materialPreference), it doesn't have
+    // dedicated fields for these on the create step.
+    const categoryLabels = {
+      asset_tags: 'Asset Tags (equipment tracking)',
+      industrial_labels: 'Industrial Labels (machinery)',
+      signage: 'Signage & Plaques (offices)',
+      compliance_plates: 'Compliance Plates (AGPO, Tax, etc.)',
+      custom: 'Custom Project'
+    };
+    const descriptionParts = [
+      `Category: ${categoryLabels[formData.productCategory] || formData.productCategory}`,
+      formData.specifications,
+      formData.timeline ? `Timeline: ${formData.timeline}` : null,
+      formData.kraPin ? `KRA PIN: ${formData.kraPin}` : null,
+      formData.complianceNeeded ? 'Compliance documentation needed (AGPO/Tax/KRA PIN/registration).' : null
+    ].filter(Boolean);
+
+    try {
+      const res = await quotesAPI.create({
+        companyName: formData.companyName,
+        contactPerson: formData.contactName,
+        email: formData.email,
+        phone: formData.phone,
+        projectDescription: descriptionParts.join('\n\n'),
+        quantity: parseInt(formData.quantity, 10),
+        materialPreference: ''
+      });
+
+      if (res.success) {
+        setSubmitted(true);
+        setTimeout(() => {
+          navigate('/quote-success');
+        }, 3000);
+      } else {
+        alert(res.error || 'Something went wrong. Please try again or contact us on WhatsApp.');
+        setSubmitting(false);
+      }
     } catch (error) {
+      console.error('Failed to submit quote request:', error);
       alert('Something went wrong. Please try again or contact us on WhatsApp.');
       setSubmitting(false);
     }
