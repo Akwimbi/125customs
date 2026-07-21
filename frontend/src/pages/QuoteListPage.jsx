@@ -3,37 +3,52 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import useAuthStore from '../stores/authStore';
+import { quotesAPI } from '../services/api';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import Badge from '../components/ui/Badge';
-import Input from '../components/ui/Input';
 
 function QuoteListPage() {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuthStore();
-  const [quotes, setQuotes] = useState([
-    { id: 1, title: 'Asset Tags - Office Equipment', status: 'pending', date: '2024-01-15', amount: 45000, items: 500 },
-    { id: 2, title: 'Industrial Labels - Warehouse', status: 'approved', date: '2024-01-10', amount: 78000, items: 1000 },
-    { id: 3, title: 'Custom Engraving - Awards', status: 'completed', date: '2023-12-20', amount: 32000, items: 50 },
-    { id: 4, title: 'Asset Tags - IT Department', status: 'rejected', date: '2024-01-05', amount: 12000, items: 200 }
-  ]);
+  const [quotes, setQuotes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [filterStatus, setFilterStatus] = useState('all');
   const [sortBy, setSortBy] = useState('date-desc');
+  const [selectedQuote, setSelectedQuote] = useState(null);
 
   useEffect(() => {
     if (!isAuthenticated || !(user?.audienceType === 'b2b' || user?.audienceType === 'both')) {
       navigate('/login');
+      return;
     }
+    fetchQuotes();
   }, [isAuthenticated, user, navigate]);
+
+  const fetchQuotes = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await quotesAPI.getByUser();
+      if (res.success) {
+        setQuotes(res.quotes || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch quotes:', err);
+      setError('Failed to load your quotes. Is the backend running?');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getStatusBadge = (status) => {
     const statusMap = {
-      'pending': { variant: 'yellow', label: 'Pending' },
-      'approved': { variant: 'blue', label: 'Approved' },
-      'rejected': { variant: 'red', label: 'Rejected' },
-      'completed': { variant: 'green', label: 'Completed' }
+      'pending': { variant: 'warning', label: 'Pending' },
+      'approved': { variant: 'info', label: 'Approved' },
+      'rejected': { variant: 'danger', label: 'Rejected' }
     };
-    const config = statusMap[status] || { variant: 'gray', label: status };
+    const config = statusMap[status] || { variant: 'secondary', label: status };
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
@@ -41,10 +56,10 @@ function QuoteListPage() {
     .filter(quote => filterStatus === 'all' || quote.status === filterStatus)
     .sort((a, b) => {
       switch (sortBy) {
-        case 'date-desc': return new Date(b.date) - new Date(a.date);
-        case 'date-asc': return new Date(a.date) - new Date(b.date);
-        case 'amount-high': return b.amount - a.amount;
-        case 'amount-low': return a.amount - b.amount;
+        case 'date-desc': return new Date(b.createdAt) - new Date(a.createdAt);
+        case 'date-asc': return new Date(a.createdAt) - new Date(b.createdAt);
+        case 'amount-high': return (b.totalAmount || 0) - (a.totalAmount || 0);
+        case 'amount-low': return (a.totalAmount || 0) - (b.totalAmount || 0);
         default: return 0;
       }
     });
@@ -82,7 +97,6 @@ function QuoteListPage() {
                 <option value="pending">Pending</option>
                 <option value="approved">Approved</option>
                 <option value="rejected">Rejected</option>
-                <option value="completed">Completed</option>
               </select>
             </div>
 
@@ -115,104 +129,126 @@ function QuoteListPage() {
           </div>
         </Card>
 
-        {/* Quotes List */}
-        {filteredQuotes.length === 0 ? (
-          <Card variant="default" padding="lg">
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">📋</div>
-              <h3 className="text-xl font-semibold mb-2">No quotes found</h3>
-              <p className="text-gray-600 mb-6">You haven't requested any quotes yet.</p>
-              <Button
-                as={Link}
-                to="/quote-request"
-                variant="primary"
-                size="lg"
-              >
-                Request Your First Quote
-              </Button>
-            </div>
-          </Card>
-        ) : (
-          <div className="space-y-4">
-            {filteredQuotes.map((quote) => (
-              <Card key={quote.id} variant="default" hover={true}>
-                <Card.Body padding="md">
-                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
-                    <div className="flex-1 mb-4 md:mb-0">
-                      <div className="flex items-center gap-4 mb-2">
-                        <h3 className="font-semibold text-lg">{quote.title}</h3>
-                        {getStatusBadge(quote.status)}
-                      </div>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
-                        <div>
-                          <span className="font-medium">Quote #:</span> Q-{quote.id}
-                        </div>
-                        <div>
-                          <span className="font-medium">Date:</span> {quote.date}
-                        </div>
-                        <div>
-                          <span className="font-medium">Items:</span> {quote.items}
-                        </div>
-                        <div>
-                          <span className="font-medium">Amount:</span> KES {quote.amount.toLocaleString()}
-                        </div>
-                      </div>
-                    </div>
+        {loading && <p className="text-gray-500">Loading your quotes...</p>}
+        {error && <p className="text-red-600">{error}</p>}
 
-                    <div className="flex gap-2">
-                      <Button
-                        as={Link}
-                        to={`/quotes/${quote.id}`}
-                        variant="outline"
-                        size="sm"
-                      >
-                        View Details
-                      </Button>
-                      {quote.status === 'approved' && (
+        {/* Quotes List */}
+        {!loading && !error && (
+          filteredQuotes.length === 0 ? (
+            <Card variant="default" padding="lg">
+              <div className="text-center py-12">
+                <div className="text-6xl mb-4">📋</div>
+                <h3 className="text-xl font-semibold mb-2">No quotes found</h3>
+                <p className="text-gray-600 mb-6">You haven't requested any quotes yet.</p>
+                <Button
+                  as={Link}
+                  to="/quote-request"
+                  variant="primary"
+                  size="lg"
+                >
+                  Request Your First Quote
+                </Button>
+              </div>
+            </Card>
+          ) : (
+            <div className="space-y-4">
+              {filteredQuotes.map((quote) => (
+                <Card key={quote.id} variant="default" hover={true}>
+                  <Card.Body padding="md">
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
+                      <div className="flex-1 mb-4 md:mb-0">
+                        <div className="flex items-center gap-4 mb-2">
+                          <h3 className="font-semibold text-lg">{quote.projectDescription}</h3>
+                          {getStatusBadge(quote.status)}
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
+                          <div>
+                            <span className="font-medium">Quote #:</span> {quote.quoteNumber}
+                          </div>
+                          <div>
+                            <span className="font-medium">Date:</span> {new Date(quote.createdAt).toLocaleDateString()}
+                          </div>
+                          <div>
+                            <span className="font-medium">Quantity:</span> {quote.quantity}
+                          </div>
+                          <div>
+                            <span className="font-medium">Amount:</span> {quote.totalAmount ? `KES ${Number(quote.totalAmount).toLocaleString()}` : 'Pending review'}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2">
                         <Button
-                          variant="primary"
+                          variant="outline"
                           size="sm"
+                          onClick={() => setSelectedQuote(quote)}
                         >
-                          Convert to Order
+                          View Details
                         </Button>
-                      )}
+                      </div>
                     </div>
-                  </div>
-                </Card.Body>
-              </Card>
-            ))}
+                  </Card.Body>
+                </Card>
+              ))}
+            </div>
+          )
+        )}
+
+        {/* Quote Details Modal */}
+        {selectedQuote && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <Card variant="default" padding="lg" className="max-w-2xl w-full mx-4 max-h-screen overflow-y-auto">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold">{selectedQuote.quoteNumber}</h2>
+                <button
+                  onClick={() => setSelectedQuote(null)}
+                  className="text-gray-500 hover:text-gray-700 text-2xl"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                <p><strong>Project:</strong> {selectedQuote.projectDescription}</p>
+                <p><strong>Quantity:</strong> {selectedQuote.quantity}</p>
+                {selectedQuote.materialPreference && <p><strong>Material:</strong> {selectedQuote.materialPreference}</p>}
+                <p><strong>Amount:</strong> {selectedQuote.totalAmount ? `KES ${Number(selectedQuote.totalAmount).toLocaleString()}` : 'Not yet set - awaiting review'}</p>
+                <p><strong>Requested:</strong> {new Date(selectedQuote.createdAt).toLocaleDateString()}</p>
+                <p><strong>Valid until:</strong> {new Date(selectedQuote.validUntil).toLocaleDateString()}</p>
+                <p><strong>Status:</strong> {getStatusBadge(selectedQuote.status)}</p>
+                {selectedQuote.notes && <p><strong>Notes:</strong> {selectedQuote.notes}</p>}
+              </div>
+              <Button variant="outline" onClick={() => setSelectedQuote(null)} className="w-full mt-6">
+                Close
+              </Button>
+            </Card>
           </div>
         )}
 
         {/* Summary Stats */}
-        <Card variant="default" padding="md" className="mt-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-            <div>
-              <p className="text-2xl font-bold text-yellow-600">
-                {quotes.filter(q => q.status === 'pending').length}
-              </p>
-              <p className="text-sm text-gray-600">Pending</p>
+        {!loading && !error && (
+          <Card variant="default" padding="md" className="mt-8">
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div>
+                <p className="text-2xl font-bold text-yellow-600">
+                  {quotes.filter(q => q.status === 'pending').length}
+                </p>
+                <p className="text-sm text-gray-600">Pending</p>
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-blue-600">
+                  {quotes.filter(q => q.status === 'approved').length}
+                </p>
+                <p className="text-sm text-gray-600">Approved</p>
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-red-600">
+                  {quotes.filter(q => q.status === 'rejected').length}
+                </p>
+                <p className="text-sm text-gray-600">Rejected</p>
+              </div>
             </div>
-            <div>
-              <p className="text-2xl font-bold text-blue-600">
-                {quotes.filter(q => q.status === 'approved').length}
-              </p>
-              <p className="text-sm text-gray-600">Approved</p>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-green-600">
-                {quotes.filter(q => q.status === 'completed').length}
-              </p>
-              <p className="text-sm text-gray-600">Completed</p>
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-red-600">
-                {quotes.filter(q => q.status === 'rejected').length}
-              </p>
-              <p className="text-sm text-gray-600">Rejected</p>
-            </div>
-          </div>
-        </Card>
+          </Card>
+        )}
       </div>
     </div>
   );
