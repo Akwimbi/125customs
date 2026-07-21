@@ -95,14 +95,28 @@ export const ordersAPI = {
   getAll: (params = {}) => {
     const query = new URLSearchParams(params).toString();
     return apiRequest(`/orders/all${query ? `?${query}` : ''}`);
-  }
+  },
+  // For admin: update order status
+  updateStatus: (id, status) => apiRequest(`/orders/${id}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify({ status })
+  })
 };
 
 // Quotes API
 export const quotesAPI = {
   create: (quoteData) => apiRequest('/quotes', { method: 'POST', body: JSON.stringify(quoteData) }),
   getById: (id) => apiRequest(`/quotes/${id}`),
-  getByUser: () => apiRequest('/quotes')
+  getByUser: () => apiRequest('/quotes'),
+  addItem: (id, item) => apiRequest(`/quotes/${id}/items`, { method: 'POST', body: JSON.stringify(item) }),
+  // For admin: get all quotes
+  getAllAdmin: (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return apiRequest(`/quotes/admin/all${query ? `?${query}` : ''}`);
+  },
+  // For admin: approve/reject
+  approve: (id, data) => apiRequest(`/quotes/${id}/approve`, { method: 'POST', body: JSON.stringify(data) }),
+  reject: (id, reason) => apiRequest(`/quotes/${id}/reject`, { method: 'POST', body: JSON.stringify({ reason }) })
 };
 
 // Paystack API
