@@ -1,6 +1,7 @@
 // frontend/src/stores/productStore.js
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { productsAPI } from '../services/api';
 
 const useProductStore = create(
   persist(
@@ -51,15 +52,18 @@ const useProductStore = create(
       error: null,
 
       fetchProducts: async () => {
-        set({ loading: true });
+        set({ loading: true, error: null });
         try {
-          // TODO: Replace with actual API call
-          // const response = await axios.get('/api/products');
-          // set({ products: response.data, loading: false });
-          
-          // For now, just set loading to false (use placeholder data)
-          set({ loading: false });
+          const res = await productsAPI.getAll();
+          if (res.success) {
+            set({ products: res.products || [], loading: false });
+          } else {
+            set({ loading: false });
+          }
         } catch (error) {
+          // Keep whatever's already in state (placeholder data on first load,
+          // or the last successfully fetched products) rather than clearing
+          // the product list just because one fetch failed.
           set({ error: error.message, loading: false });
         }
       },

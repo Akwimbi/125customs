@@ -40,7 +40,7 @@ function HomePage() {
     id: product.id,
     name: product.name,
     price: product.price ?? product.basePrice ?? 0,
-    image: product.image || placeholderImage(product.name),
+    image: product.image || product.imageUrl || placeholderImage(product.name),
     rating: product.rating ?? 4.5,
     reviews: product.reviews ?? 0,
     audience: product.audience ?? product.audienceType ?? 'both',
@@ -240,6 +240,12 @@ function HomePage() {
                       src={product.image}
                       alt={product.name}
                       className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        const initial = (product.name || '?').trim().charAt(0).toUpperCase();
+                        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><rect width="300" height="300" fill="#8B4513"/><text x="150" y="165" font-size="96" fill="#ffffff" text-anchor="middle" font-family="sans-serif">${initial}</text></svg>`;
+                        e.target.src = `data:image/svg+xml,${encodeURIComponent(svg)}`;
+                      }}
                     />
                     {product.badge && (
                       <span className="absolute top-2 left-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded">
