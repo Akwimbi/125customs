@@ -2,7 +2,7 @@
 // 125Customs Product Listing - Amazon/Alibaba Redesign
 import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { productsAPI, categoriesAPI } from '../services/api';
+import { productsAPI } from '../services/api';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import Badge from '../components/ui/Badge';
@@ -87,15 +87,19 @@ function ProductsPage() {
     }
   }, [products, activeFilter, searchParams, sortBy, priceRange]);
 
-  // Static category filters for UI
+  // Category filters - must match Product.category values exactly (they're
+  // plain strings with no enum constraint in the schema, so these have to be
+  // kept in sync by hand). Previously used underscores (asset_tags) while
+  // real product data uses hyphens (asset-tags) - every filter except
+  // "Trophies" was silently returning zero results.
   const categoryFilters = [
     { id: 'all', name: 'All Products', icon: '📦' },
-    { id: 'asset_tags', name: 'Asset Tags', icon: '🏷️' },
-    { id: 'industrial_labels', name: 'Industrial Labels', icon: '🏭' },
-    { id: 'pet_tags', name: 'Pet ID Tags', icon: '🐕' },
-    { id: 'jewelry_boxes', name: 'Jewelry Boxes', icon: '🎁' },
+    { id: 'asset-tags', name: 'Asset Tags', icon: '🏷️' },
+    { id: 'equipment-labels', name: 'Equipment Labels', icon: '🏭' },
+    { id: 'pet-tags', name: 'Pet ID Tags', icon: '🐕' },
+    { id: 'keychains', name: 'Keychains', icon: '🔑' },
     { id: 'trophies', name: 'Trophies & Awards', icon: '🏆' },
-    { id: 'signage', name: 'Signage & Plaques', icon: '📋' }
+    { id: 'signs', name: 'Signage & Plaques', icon: '📋' }
   ];
 
   if (loading) {
