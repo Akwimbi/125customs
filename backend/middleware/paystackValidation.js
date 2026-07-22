@@ -3,19 +3,15 @@ const Joi = require('joi');
 
 /**
  * Schema for initializing payment
- * Expected body: { email, amount, callbackUrl, metadata?: { phone?, ... } }
+ * Expected body: { orderId }
+ * Amount, email, and callback URL are all derived server-side from the
+ * order record - never accepted from the client. This schema used to
+ * require the opposite (email/amount/callbackUrl, and explicitly rejected
+ * orderId), which meant every real request got rejected before the route's
+ * own price-tampering protection ever ran.
  */
 const initializePaymentSchema = Joi.object({
-  email: Joi.string().email().required(),
-  amount: Joi.number().positive().required().messages({
-    'number.base': 'Amount must be a number',
-    'number.positive': 'Amount must be greater than zero'
-  }),
-  callbackUrl: Joi.string().uri().required(),
-  metadata: Joi.object({
-    phone: Joi.string().optional(),
-    // allow any other metadata fields
-  }).optional()
+  orderId: Joi.number().integer().positive().required()
 });
 
 /**

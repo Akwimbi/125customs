@@ -57,6 +57,37 @@ const protect = async (req, res, next) => {
   }
 };
 
+// Optional auth - populates req.user if a valid token is present, but never
+// blocks the request if there isn't one. For routes that support both guest
+// and logged-in flows (like payment initialization) but still need to know
+// who's calling when someone IS logged in, e.g. to verify order ownership.
+const optionalAuth = async (req, res, next) => {
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith('Bearer')
+  ) {
+    try {
+      const token = req.headers.authorization.split(' ')[1];
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      req.user = await prisma.user.findUnique({
+        where: { id: decoded.userId },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          role: true,
+          audienceType: true
+        }
+      });
+    } catch (error) {
+      // Invalid/expired token on an optional-auth route just means "treat as
+      // guest" - don't block the request over it.
+      req.user = null;
+    }
+  }
+  next();
+};
+
 // Admin middleware - check if user is admin
 const admin = (req, res, next) => {
   if (req.user && req.user.role === 'admin') {
@@ -69,4 +100,4 @@ const admin = (req, res, next) => {
   }
 };
 
-module.exports = { protect, admin };
+module.exports = { protect, admin, optionalAuth };

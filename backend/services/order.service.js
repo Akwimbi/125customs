@@ -116,7 +116,7 @@ async function createOrder({
       });
     }
 
-    return order;
+    return { ...order, items: enrichedItems };
   });
 
   // Send confirmation email (outside transaction as it's not critical)

@@ -3,7 +3,7 @@
 const express = require('express');
 const router = express.Router();
 const orderService = require('../services/order.service');
-const { protect, admin } = require('../middleware/auth.middleware');
+const { protect, admin, optionalAuth } = require('../middleware/auth.middleware');
 
 // GET /api/orders - Get user's orders (protected)
 router.get('/', protect, async (req, res) => {
@@ -56,10 +56,10 @@ router.get('/all', protect, admin, async (req, res) => {
   }
 });
 
-// POST /api/orders - Create new order (protected)
-router.post('/', async (req, res) => {
+// POST /api/orders - Create new order (supports guest + logged-in checkout)
+router.post('/', optionalAuth, async (req, res) => {
   try {
-    const { items, shippingAddress, paymentMethod } = req.body;
+    const { items, shippingAddress, paymentMethod, customerInfo, audienceType } = req.body;
     
     // Validate required fields
     if (!items || !Array.isArray(items) || items.length === 0) {
@@ -82,23 +82,22 @@ router.post('/', async (req, res) => {
         error: 'Payment method is required' 
       });
     }
+
+    if (!customerInfo || !customerInfo.name || !customerInfo.email) {
+      return res.status(400).json({
+        success: false,
+        error: 'Customer name and email are required'
+      });
+    }
     
-    // Prepare customer info from user data
-    const customerInfo = {
-      name: req.user.name,
-      email: req.user.email,
-      phone: req.user.phone || '',
-      // For B2B, we might need additional fields from user profile
-      ...(req.user.audienceType === 'b2b' && {
-        companyName: req.user.companyName || '',
-        contactPerson: req.user.contactPerson || ''
-      })
-    };
-    
-    // Create order using order service
+    // Create order using order service. customerInfo comes from the request
+    // body (works for both guest and logged-in checkout - the frontend
+    // already collects/knows this). If a user is logged in (optionalAuth
+    // populated req.user), attach their ID so the order shows up in their
+    // account; otherwise it's a genuine guest order with userId: null.
     const order = await orderService.createOrder({
-      userId: req.user.id,
-      audienceType: req.user.audienceType,
+      userId: req.user?.id || null,
+      audienceType: audienceType || req.user?.audienceType || 'both',
       customerInfo,
       shippingAddress,
       paymentMethod,

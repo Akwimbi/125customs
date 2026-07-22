@@ -4,11 +4,11 @@ const express = require('express');
 const router = express.Router();
 const paystackService = require('../services/paystack.service');
 const orderService = require('../services/order.service');
-const { protect } = require('../middleware/auth.middleware');
+const { protect, optionalAuth } = require('../middleware/auth.middleware');
 const { validateInitializePayment, validateVerifyPayment } = require('../middleware/paystackValidation');
 
-// POST /api/paystack/initialize - Initialize payment (protected)
-router.post('/initialize', validateInitializePayment, async (req, res) => {
+// POST /api/paystack/initialize - Initialize payment (supports guest + logged-in checkout)
+router.post('/initialize', optionalAuth, validateInitializePayment, async (req, res) => {
   try {
     const { orderId } = req.body;
     if (!orderId) {

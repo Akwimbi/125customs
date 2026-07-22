@@ -45,7 +45,16 @@ async function getQuoteById(quoteId) {
           product: true
         }
       },
-      user: true
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          audienceType: true,
+          companyName: true
+        }
+      }
     }
   });
 
@@ -174,7 +183,16 @@ async function getAllQuotes({ status = null, limit = 50, offset = 0 }) {
           product: true
         }
       },
-      user: true
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          audienceType: true,
+          companyName: true
+        }
+      }
     },
     take: limit,
     skip: offset,
