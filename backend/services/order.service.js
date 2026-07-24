@@ -53,7 +53,24 @@ async function createOrder({
         throw new Error(`Insufficient stock for product ${product.name}`);
       }
 
-      const unitPrice = product.basePrice;
+      // Look up any price adjustments for the selected options (material,
+      // size, etc.) - selectedOptions is an array of "optionName:value"
+      // strings. Previously this was completely ignored - unitPrice was
+      // always just the flat basePrice regardless of what was selected.
+      let optionsAdjustment = 0;
+      const selectedOptions = item.selectedOptions || [];
+      for (const optionStr of selectedOptions) {
+        const [optionName, optionValue] = optionStr.split(':');
+        if (!optionName || !optionValue) continue;
+        const option = await tx.productOption.findFirst({
+          where: { productId: product.id, optionName, optionValue }
+        });
+        if (option) {
+          optionsAdjustment += Number(option.priceAdjustment);
+        }
+      }
+
+      const unitPrice = Number(product.basePrice) + optionsAdjustment;
       const quantity = item.quantity || 1;
       const subtotal = unitPrice * quantity;
       totalAmount += subtotal;
@@ -65,7 +82,7 @@ async function createOrder({
         unitPrice,
         subtotal,
         customizationDetails: item.customizationDetails || null,
-        selectedOptions: item.selectedOptions || []
+        selectedOptions
       });
 
       // Deduct stock atomically within the transaction

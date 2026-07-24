@@ -112,6 +112,27 @@ async function main() {
       data: productData
     });
     console.log(`✅ Product created: ${product.name}`);
+
+    // Sample material/finish options with real price adjustments, so the
+    // order pricing logic that applies these has actual data to work with.
+    if (product.category === 'asset-tags') {
+      await prisma.productOption.createMany({
+        data: [
+          { productId: product.id, optionName: 'finish', optionValue: 'standard', priceAdjustment: 0 },
+          { productId: product.id, optionName: 'finish', optionValue: 'premium-polished', priceAdjustment: 150 }
+        ]
+      });
+      console.log(`   ↳ Options added: finish (standard, premium-polished)`);
+    }
+    if (product.category === 'trophies') {
+      await prisma.productOption.createMany({
+        data: [
+          { productId: product.id, optionName: 'material', optionValue: 'silver', priceAdjustment: 0 },
+          { productId: product.id, optionName: 'material', optionValue: 'gold', priceAdjustment: 800 }
+        ]
+      });
+      console.log(`   ↳ Options added: material (silver, gold)`);
+    }
   }
 
   console.log('🎉 Database seed completed successfully!');

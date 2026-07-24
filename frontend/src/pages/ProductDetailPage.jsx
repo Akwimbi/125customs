@@ -29,12 +29,14 @@ function ProductDetailPage() {
       const res = await productsAPI.getById(id);
       if (res.success) {
         setProduct(res.product);
-        // Set default options
+        // Set default options - one default value per distinct optionName
+        // (e.g. "finish" -> "standard"), picking the first value seen for
+        // each group from the flat list of ProductOption records.
         if (res.product.options && res.product.options.length > 0) {
           const defaults = {};
           res.product.options.forEach(opt => {
-            if (opt.options && opt.options.length > 0) {
-              defaults[opt.name] = opt.options[0];
+            if (!(opt.optionName in defaults)) {
+              defaults[opt.optionName] = opt.optionValue;
             }
           });
           setSelectedOptions(defaults);
@@ -64,15 +66,14 @@ function ProductDetailPage() {
     try {
       const cartItem = {
         productId: product.id,
-        name: product.name,
-        price: product.basePrice,
         quantity: quantity,
-        customText: customText,
-        options: selectedOptions,
-        image: product.imageUrl || null
+        customizationDetails: customText || null,
+        // selectedOptions is a flat array of "optionName:value" strings on
+        // the backend, not the {name: value} object this form collects into
+        selectedOptions: Object.entries(selectedOptions).map(([name, value]) => `${name}:${value}`)
       };
 
-      await cartAPI.addItem('default', cartItem);
+      await cartAPI.addItem(cartItem);
       alert(`${product.name} added to cart!`);
     } catch (error) {
       console.error('Error adding to cart:', error);
@@ -179,52 +180,54 @@ function ProductDetailPage() {
               HUMAN TOUCH: Customization options (not generic "Select Options")
               Real use case: What would a customer actually choose?
             */}
-            {product.hasOptions && product.options && product.options.length > 0 && (
-              <div className="mb-8 space-y-4">
-                <h3 className="font-medium mb-2">Customize Your Order:</h3>
-                
-                {product.options.map((option, index) => (
-                  <div key={index} className="bg-white p-4 rounded-lg border border-gray-200">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {option.name}
-                    </label>
-                    
-                    {option.type === 'select' && (
+            {product.options && product.options.length > 0 && (() => {
+              // Group the flat ProductOption list by optionName so each
+              // distinct option (e.g. "finish", "material") gets one
+              // dropdown with its possible values.
+              const grouped = {};
+              product.options.forEach(opt => {
+                if (!grouped[opt.optionName]) grouped[opt.optionName] = [];
+                grouped[opt.optionName].push(opt);
+              });
+
+              return (
+                <div className="mb-8 space-y-4">
+                  <h3 className="font-medium mb-2">Customize Your Order:</h3>
+
+                  {Object.entries(grouped).map(([optionName, values]) => (
+                    <div key={optionName} className="bg-white p-4 rounded-lg border border-gray-200">
+                      <label className="block text-sm font-medium text-gray-700 mb-2 capitalize">
+                        {optionName}
+                      </label>
                       <select
-                        value={selectedOptions[option.name] || ''}
-                        onChange={(e) => handleOptionChange(option.name, e.target.value)}
+                        value={selectedOptions[optionName] || ''}
+                        onChange={(e) => handleOptionChange(optionName, e.target.value)}
                         className="w-full px-4 py-2 border border-gray-300 rounded-md focus:border-[#8B4513] focus:outline-none"
                       >
-                        <option value="">Choose...</option>
-                        {option.options.map((opt, idx) => (
-                          <option key={idx} value={opt}>{opt}</option>
+                        {values.map((opt) => (
+                          <option key={opt.id} value={opt.optionValue}>
+                            {opt.optionValue}
+                            {Number(opt.priceAdjustment) > 0 ? ` (+KES ${Number(opt.priceAdjustment).toLocaleString()})` : ''}
+                          </option>
                         ))}
                       </select>
-                    )}
+                    </div>
+                  ))}
 
-                    {option.type === 'text' && (
-                      <Input
-                        type="text"
-                        placeholder={option.placeholder || `Enter ${option.name.toLowerCase()}...`}
-                        value={customText}
-                        onChange={(e) => setCustomText(e.target.value)}
-                        helperText={option.helperText || ''}
-                      />
-                    )}
-
-                    {option.type === 'number' && (
-                      <Input
-                        type="number"
-                        min={option.min || 1}
-                        max={option.max || 1000}
-                        value={quantity}
-                        onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-                      />
-                    )}
+                  <div className="bg-white p-4 rounded-lg border border-gray-200">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Custom text (optional)
+                    </label>
+                    <Input
+                      type="text"
+                      placeholder="Enter text to engrave..."
+                      value={customText}
+                      onChange={(e) => setCustomText(e.target.value)}
+                    />
                   </div>
-                ))}
-              </div>
-            )}
+                </div>
+              );
+            })()}
 
             {/* Quantity selector (for B2B bulk orders) */}
             {product.audienceType === 'b2b' && (

@@ -21,7 +21,7 @@ function CartPage() {
   const fetchCart = async () => {
     try {
       setLoading(true);
-      const res = await cartAPI.get('default');
+      const res = await cartAPI.get();
       if (res.success) {
         setItems(res.cart.items || []);
       }
@@ -32,19 +32,19 @@ function CartPage() {
     }
   };
 
-  const handleUpdateQuantity = async (productId, newQuantity) => {
+  const handleUpdateQuantity = async (itemId, newQuantity) => {
     if (newQuantity < 1) return;
     try {
-      await cartAPI.updateItem('default', productId, { quantity: newQuantity });
+      await cartAPI.updateItem(itemId, { quantity: newQuantity });
       fetchCart(); // Refresh cart
     } catch (error) {
       console.error('Error updating quantity:', error);
     }
   };
 
-  const handleRemoveItem = async (productId) => {
+  const handleRemoveItem = async (itemId) => {
     try {
-      await cartAPI.removeItem('default', productId);
+      await cartAPI.removeItem(itemId);
       fetchCart(); // Refresh cart
     } catch (error) {
       console.error('Error removing item:', error);
@@ -53,7 +53,7 @@ function CartPage() {
 
   const handleClearCart = async () => {
     try {
-      await cartAPI.clear('default');
+      await cartAPI.clear();
       fetchCart(); // Refresh cart
     } catch (error) {
       console.error('Error clearing cart:', error);
@@ -65,7 +65,7 @@ function CartPage() {
   };
 
   const getTotal = () => {
-    return items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    return items.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
   };
 
   if (loading) {
@@ -131,12 +131,11 @@ function CartPage() {
           {/* Cart Items - 2/3 width */}
           <div className="lg:col-span-2 space-y-4">
             {items.map((item) => (
-              <Card key={item.productId} variant="subtle" className="p-4">
+              <Card key={item.id} variant="subtle" className="p-4">
                 <div className="flex gap-4">
                   {/* Product Image (placeholder) */}
                   <div className="w-24 h-24 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
                     <span className="text-3xl">🏷️</span>
-                    {/* TODO: <img src={item.image} alt={item.name} className="w-full h-full object-cover rounded-lg" /> */}
                   </div>
 
                   {/* Product Details */}
@@ -146,26 +145,26 @@ function CartPage() {
                         to={`/products/${item.productId}`}
                         className="font-medium hover:text-[#8B4513]"
                       >
-                        {item.name}
+                        {item.product?.name}
                       </Link>
                       <button
-                        onClick={() => handleRemoveItem(item.productId)}
+                        onClick={() => handleRemoveItem(item.id)}
                         className="text-gray-400 hover:text-red-500 transition-colors ml-4"
-                        aria-label={`Remove ${item.name} from cart`}
+                        aria-label={`Remove ${item.product?.name} from cart`}
                       >
                         ✕
                       </button>
                     </div>
 
                     {/* Custom options (if any) */}
-                    {item.customText && (
+                    {item.customizationDetails && (
                       <p className="text-sm text-gray-600 mb-2">
-                        Custom text: "{item.customText}"
+                        Custom text: "{item.customizationDetails}"
                       </p>
                     )}
-                    {item.options && Object.keys(item.options).length > 0 && (
+                    {item.selectedOptions && item.selectedOptions.length > 0 && (
                       <p className="text-sm text-gray-600 mb-2">
-                        Options: {Object.entries(item.options).map(([key, val]) => `${key}: ${val}`).join(', ')}
+                        Options: {item.selectedOptions.join(', ')}
                       </p>
                     )}
 
@@ -173,7 +172,7 @@ function CartPage() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <button
-                          onClick={() => handleUpdateQuantity(item.productId, item.quantity - 1)}
+                          onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
                           className="w-8 h-8 border border-gray-300 rounded flex items-center justify-center hover:bg-gray-50"
                           disabled={item.quantity <= 1}
                         >
@@ -181,7 +180,7 @@ function CartPage() {
                         </button>
                         <span className="w-12 text-center font-medium">{item.quantity}</span>
                         <button
-                          onClick={() => handleUpdateQuantity(item.productId, item.quantity + 1)}
+                          onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
                           className="w-8 h-8 border border-gray-300 rounded flex items-center justify-center hover:bg-gray-50"
                         >
                           +
@@ -190,10 +189,10 @@ function CartPage() {
 
                       <div className="text-right">
                         <p className="font-display text-lg font-bold text-[#8B4513]">
-                          KES {(item.price * item.quantity).toLocaleString()}
+                          KES {(item.unitPrice * item.quantity).toLocaleString()}
                         </p>
                         <p className="text-sm text-gray-500">
-                          KES {item.price.toLocaleString()} each
+                          KES {item.unitPrice.toLocaleString()} each
                         </p>
                       </div>
                     </div>
@@ -204,7 +203,7 @@ function CartPage() {
 
             {/* Clear cart button (subtle, not prominent) */}
             <button
-              onClick={clearCart}
+              onClick={handleClearCart}
               className="text-sm text-gray-500 hover:text-red-500 transition-colors"
             >
               Clear all items
